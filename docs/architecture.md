@@ -17,24 +17,38 @@ flowchart LR
 | Knowledge file | Single source of truth about Johan for the assistant. Versioned with the code. |
 | PostgreSQL | Anonymous log of questions asked to the assistant (no personal data), used to improve the knowledge file. |
 
-## Chat contract (frontend ready, backend pending)
+## Chat contract
 
-The chat UI is implemented and talks to a `POST /chat` endpoint that does not exist yet. Until it does, the panel shows the "assistant unavailable" state with the contact email. Types live in `frontend/src/services/api.ts`.
+`POST /api/chat`, implemented in `backend/app/api/routes/chat.py` and consumed by `frontend/src/services/api.ts`. How a question travels, and every failure mode, is in [`chat-flow.md`](chat-flow.md).
 
 ```jsonc
-// POST /chat
+// POST /api/chat
 { "message": "string, 1 to 1000 characters",
-  "locale": "es" | "en",                      // language of the site UI, the answer follows the question
-  "history": [{ "role": "user" | "assistant", "content": "string" }] }   // last 10 turns
+  "locale": "es" | "en",                       // language of the site UI; the answer follows the question
+  "history": [{ "role": "user" | "assistant", "content": "string" }],   // at most 6 earlier messages
+  "quick_question_id": "projects" | "stack" | "production" | "availability" | "challenge" | "ai" }  // optional
 
-// 200
+// 200 (also for refusals)
 { "answer": "plain text",
-  "sources": ["projects" | "experience" | "about" | "skills" | "education" | "contact"] }  // optional
+  "refused": false,                            // true: off topic or an attack, `answer` is a fixed text
+  "section": "projects" | "experience" | "about" | "skills" | "education" | "contact" | null,
+  "message_id": "uuid",
+  "request_id": "string" }
 
-// 429 rate limit per IP, 503 LLM unavailable: the UI has a message for each
+// Every error has the same body; clients branch on `code`, never on `message`
+{ "error": { "code": "rate_limited", "message": "text in the visitor's language",
+             "request_id": "string", "details": null } }
 ```
 
-`sources` is optional: when present, the UI links each section under the answer ("Ver en: Proyectos").
+| Status | `code` | Meaning |
+|---|---|---|
+| 422 | `invalid_request` | Body not valid (empty, over 1000 characters, unknown field, more than 6 history messages) |
+| 429 | `rate_limited` | Too many requests; `Retry-After` says when to try again |
+| 502 | `invalid_model_output` | The model answered twice without a usable answer |
+| 503 | `assistant_paused` | Switched off, or today's model budget is spent |
+| 503 | `assistant_unavailable` | No model could answer in time |
+
+When `section` is present, the UI links to that part of the page under the answer ("Ver en: Proyectos"). A quick-question id is answered from the knowledge file without calling a model.
 
 ## Frontend build
 
