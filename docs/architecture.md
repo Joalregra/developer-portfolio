@@ -17,6 +17,29 @@ flowchart LR
 | Knowledge file | Single source of truth about Johan for the assistant. Versioned with the code. |
 | PostgreSQL | Anonymous log of questions asked to the assistant (no personal data), used to improve the knowledge file. |
 
+## Chat contract (frontend ready, backend pending)
+
+The chat UI is implemented and talks to a `POST /chat` endpoint that does not exist yet. Until it does, the panel shows the "assistant unavailable" state with the contact email. Types live in `frontend/src/services/api.ts`.
+
+```jsonc
+// POST /chat
+{ "message": "string, 1 to 1000 characters",
+  "locale": "es" | "en",                      // language of the site UI, the answer follows the question
+  "history": [{ "role": "user" | "assistant", "content": "string" }] }   // last 10 turns
+
+// 200
+{ "answer": "plain text",
+  "sources": ["projects" | "experience" | "about" | "skills" | "education" | "contact"] }  // optional
+
+// 429 rate limit per IP, 503 LLM unavailable: the UI has a message for each
+```
+
+`sources` is optional: when present, the UI links each section under the answer ("Ver en: Proyectos").
+
+## Frontend build
+
+`npm run build` type-checks, builds the client, builds a server bundle of the app and prerenders `/es/` and `/en/` into static HTML, so the content is in the HTML itself (SEO, link previews, first paint) and React hydrates it. Set `VITE_SITE_URL` to enable canonical/hreflang tags, absolute Open Graph URLs and `sitemap.xml`.
+
 ## Repository layout
 
 ```
