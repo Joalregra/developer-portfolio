@@ -1,18 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Locale } from '../../data/profile'
 import { readStorage, removeStorage, writeStorage } from '../../lib/storage'
-import { ApiError, postChat, type ChatSection } from '../../services/api'
+import { ApiError, postChat, type ChatSection, type QuickQuestionId } from '../../services/api'
 
 export const MAX_LENGTH = 1000
 export const COUNTER_FROM = 800
 const STORAGE_KEY = 'chat:v1'
-const HISTORY_LIMIT = 10
+// The backend accepts 6 earlier messages and rejects more with a 422.
+const HISTORY_LIMIT = 6
 
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
-  sources?: ChatSection[]
+  /** Answers only: the section of the page the answer is based on. */
+  section?: ChatSection
+  /** Questions only: set when the text came from a quick-question button. */
+  quick?: QuickQuestionId
 }
 
 export type ChatError = 'unavailable' | 'rateLimit' | 'offline'
@@ -77,13 +81,19 @@ export function useChat(locale: Locale) {
               .slice(0, -1)
               .slice(-HISTORY_LIMIT)
               .map(({ role, content }) => ({ role, content })),
+            quick_question_id: last.quick,
           },
           current.signal,
         )
         if (current.signal.aborted) return
         setMessages((previous) => [
           ...previous,
-          { id: newId(), role: 'assistant', content: response.answer, sources: response.sources },
+          {
+            id: newId(),
+            role: 'assistant',
+            content: response.answer,
+            section: response.section ?? undefined,
+          },
         ])
       } catch (caught) {
         if (current.signal.aborted) return
@@ -96,10 +106,13 @@ export function useChat(locale: Locale) {
   )
 
   const send = useCallback(
-    (text: string) => {
+    (text: string, quick?: QuickQuestionId) => {
       const content = text.trim()
       if (!content || content.length > MAX_LENGTH || sending) return false
-      const next = [...messagesRef.current, { id: newId(), role: 'user' as const, content }]
+      const next: ChatMessage[] = [
+        ...messagesRef.current,
+        { id: newId(), role: 'user', content, quick },
+      ]
       messagesRef.current = next
       setMessages(next)
       void ask(next)

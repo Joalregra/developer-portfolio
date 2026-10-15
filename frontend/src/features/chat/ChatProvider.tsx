@@ -1,5 +1,6 @@
 import { Suspense, useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocale } from '../../hooks/useLocale'
+import type { QuickQuestionId } from '../../services/api'
 import { ChatContext } from './ChatContext'
 import { ChatLauncher } from './ChatLauncher'
 import { ChatPanel } from './lazy'
@@ -14,12 +15,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const { send } = chat
 
   const openChat = useCallback(
-    (question?: string) => {
+    (question?: string, quick?: QuickQuestionId) => {
       // Remember what opened the panel so focus can go back to it (CHAT-01).
       const active = document.activeElement
       openerRef.current = active instanceof HTMLElement && active !== document.body ? active : null
       setIsOpen(true)
-      if (question) send(question)
+      if (question) send(question, quick)
     },
     [send],
   )

@@ -38,21 +38,16 @@ export function MessageList() {
               <p className="whitespace-pre-wrap break-words">
                 <LinkedText text={message.content} />
               </p>
-              {message.sources && message.sources.length > 0 && (
+              {message.section && (
                 <p className="mt-2 text-sm text-ink-muted">
                   {t.chat.seeIn}{' '}
-                  {message.sources.map((source, index) => (
-                    <span key={source}>
-                      {index > 0 && ', '}
-                      <a
-                        href={`#${source}`}
-                        onClick={closeChat}
-                        className="font-medium underline underline-offset-2 hover:text-accent"
-                      >
-                        {t.chat.sections[source]}
-                      </a>
-                    </span>
-                  ))}
+                  <a
+                    href={`#${message.section}`}
+                    onClick={closeChat}
+                    className="font-medium underline underline-offset-2 hover:text-accent"
+                  >
+                    {t.chat.sections[message.section]}
+                  </a>
                 </p>
               )}
             </div>

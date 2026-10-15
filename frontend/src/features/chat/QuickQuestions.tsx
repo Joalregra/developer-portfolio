@@ -1,4 +1,5 @@
 import { useLocale } from '../../hooks/useLocale'
+import { toQuickQuestionId } from '../../services/api'
 import { useChatContext } from './ChatContext'
 
 /** Chips from section 9 of the knowledge file. Open at the start, collapsible afterwards. */
@@ -15,7 +16,7 @@ export function QuickQuestions() {
             type="button"
             aria-disabled={chat.sending}
             onClick={() => {
-              chat.send(item.question)
+              chat.send(item.question, toQuickQuestionId(item.id))
               // The chips re-mount once the conversation starts, so keep the focus in the panel.
               document.getElementById('chat-input')?.focus()
             }}
