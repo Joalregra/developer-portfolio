@@ -34,7 +34,7 @@ This file is the single source of truth for the portfolio chatbot. Facts are wri
 - Seniority: Junior
 - Main focus: Python plus React
 - Target roles: Python Developer, Junior Backend Developer, JavaScript Developer, Junior Frontend Developer (React), Junior DevOps
-- Location: San Jose, Caldas, Colombia
+- Location: San José, Caldas, Colombia
 - Time zone: Colombia, GMT-5
 - Experience in short: 2 years of formal training at SENA plus a 6-month traineeship (April 2026 to 2026-10-07) as a FullStack Developer Trainee (college trainee PRD) at Globant.
 - Strengths shown in projects: backend APIs with FastAPI, AI-driven pipelines, RAG systems (semantic search), React interfaces, and automated testing.
@@ -284,7 +284,7 @@ A: Junior. Johan has 2 years of formal training at SENA plus a 6-month traineesh
 A: Johan's profile is mostly backend: Python, FastAPI, endpoints and RAG systems with AI-driven architectures. Johan also has frontend experience with React, including mockups and interface design. Target roles are Python Developer, Junior Backend Developer, JavaScript Developer, Junior Frontend Developer (React) and Junior DevOps.
 
 ### Q: What is your availability, location and preferred work mode?
-A: Johan is available for immediate hiring and lives in San Jose, Caldas, Colombia (GMT-5). Johan prefers remote or hybrid work and can work in United States and Europe time zones. Johan can relocate for on-site roles in Risaralda and Caldas and accepts occasional trips. Contract types: full-time, contractor and freelance.
+A: Johan is available for immediate hiring and lives in San José, Caldas, Colombia (GMT-5). Johan prefers remote or hybrid work and can work in United States and Europe time zones. Johan can relocate for on-site roles in Risaralda and Caldas and accepts occasional trips. Contract types: full-time, contractor and freelance.
 
 ### Q: How can I contact you? Do you have a GitHub?
 A: Email: johanalexis808@gmail.com. LinkedIn: https://www.linkedin.com/in/johan-rendon-granada-14b8a82bb. GitHub: https://github.com/Joalregra. The CV (PDF, English and Spanish) can be downloaded from the "Download CV" button on the portfolio.
