@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: portfolio
       POSTGRES_DB: portfolio
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -21,8 +21,11 @@ services:
     env_file: ./backend/.env
     environment:
       DATABASE_URL: postgresql+psycopg://portfolio:portfolio@db:5432/portfolio
+    # Docker's default is 10 s, which would cut a chat answer and drop the last log rows.
+    # uvicorn waits up to 30 s for running requests, then the app drains the log writes (5 s).
+    stop_grace_period: 45s
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       db:
         condition: service_healthy
