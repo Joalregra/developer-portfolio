@@ -32,7 +32,7 @@ export function Composer({ inputRef }: { inputRef: RefObject<HTMLTextAreaElement
   }
 
   return (
-    <form onSubmit={onSubmit} className="border-t border-line px-4 py-3">
+    <form onSubmit={onSubmit} className="shrink-0 border-t border-line px-4 pt-3 pb-2">
       <label htmlFor="chat-input" className="sr-only">
         {t.chat.inputLabel}
       </label>
@@ -40,14 +40,14 @@ export function Composer({ inputRef }: { inputRef: RefObject<HTMLTextAreaElement
         <textarea
           id="chat-input"
           ref={inputRef}
-          rows={2}
+          rows={1}
           value={value}
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={onKeyDown}
           placeholder={t.chat.placeholder}
           aria-invalid={tooLong}
           aria-describedby="chat-counter"
-          className="max-h-32 min-h-11 flex-1 resize-none rounded-md border border-line-strong bg-paper px-3 py-2 text-ink placeholder:text-ink-muted"
+          className="max-h-32 min-h-11 flex-1 resize-none rounded-md [field-sizing:content] border border-line-strong bg-paper px-3 py-2 text-ink placeholder:text-ink-muted"
         />
         <button
           type="submit"
@@ -60,11 +60,13 @@ export function Composer({ inputRef }: { inputRef: RefObject<HTMLTextAreaElement
       </div>
       <p
         id="chat-counter"
-        className={`mt-1 min-h-5 text-sm ${tooLong ? 'font-semibold text-danger' : 'text-ink-muted'}`}
+        className={`mt-1 text-sm empty:hidden ${tooLong ? 'font-semibold text-danger' : 'text-ink-muted'}`}
       >
         {length >= COUNTER_FROM ? t.chat.counter(length, MAX_LENGTH) : ''}
       </p>
-      <p className="mt-1 text-sm text-ink-muted">{t.chat.privacy}</p>
+      <p className="mt-2 text-xs leading-snug text-ink-muted">
+        <span>{t.chat.notice}</span> <span>{t.chat.privacy}</span>
+      </p>
     </form>
   )
 }
