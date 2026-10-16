@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { ThumbDownIcon, ThumbUpIcon } from '../../components/ui/icons'
 import { LinkedText } from '../../components/ui/LinkedText'
 import { useLocale } from '../../hooks/useLocale'
 import { profile } from '../../data/profile'
@@ -7,7 +8,7 @@ import { useChatContext } from './ChatContext'
 export function MessageList() {
   const { t } = useLocale()
   const { chat, closeChat } = useChatContext()
-  const { messages, sending, error, retry } = chat
+  const { messages, sending, error, retry, rate } = chat
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -38,22 +39,46 @@ export function MessageList() {
               <p className="whitespace-pre-wrap break-words">
                 <LinkedText text={message.content} />
               </p>
-              {message.sources && message.sources.length > 0 && (
+              {message.section && (
                 <p className="mt-2 text-sm text-ink-muted">
                   {t.chat.seeIn}{' '}
-                  {message.sources.map((source, index) => (
-                    <span key={source}>
-                      {index > 0 && ', '}
-                      <a
-                        href={`#${source}`}
-                        onClick={closeChat}
-                        className="font-medium underline underline-offset-2 hover:text-accent"
-                      >
-                        {t.chat.sections[source]}
-                      </a>
-                    </span>
-                  ))}
+                  <a
+                    href={`#${message.section}`}
+                    onClick={closeChat}
+                    className="font-medium underline underline-offset-2 hover:text-accent"
+                  >
+                    {t.chat.sections[message.section]}
+                  </a>
                 </p>
+              )}
+              {!fromUser && message.messageId && (
+                <div
+                  role="group"
+                  aria-label={t.chat.feedback.label}
+                  className="mt-1 flex items-center gap-1 text-ink-muted"
+                >
+                  {(
+                    [
+                      { rating: 'up', label: t.chat.feedback.helpful, Icon: ThumbUpIcon },
+                      { rating: 'down', label: t.chat.feedback.notHelpful, Icon: ThumbDownIcon },
+                    ] as const
+                  ).map(({ rating, label, Icon }) => (
+                    <button
+                      key={rating}
+                      type="button"
+                      aria-label={label}
+                      aria-pressed={message.rating === rating}
+                      disabled={message.rating !== undefined}
+                      onClick={() => void rate(message.id, rating === 'up')}
+                      className={`inline-flex size-11 items-center justify-center rounded-md hover:text-accent disabled:cursor-default disabled:hover:text-inherit ${
+                        message.rating === rating ? 'text-accent' : 'disabled:opacity-40'
+                      }`}
+                    >
+                      <Icon size={16} />
+                    </button>
+                  ))}
+                  {message.rating && <span className="text-sm">{t.chat.feedback.thanks}</span>}
+                </div>
               )}
             </div>
           </div>

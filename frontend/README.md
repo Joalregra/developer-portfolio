@@ -6,13 +6,13 @@ The page is built for recruiters and technical leads, who are often on a phone. 
 
 ## Status
 
-| Part                                                                    | State                                                                                          |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Sections: hero, projects, experience, about, skills, education, contact | Done                                                                                           |
-| Spanish and English, light and dark theme                               | Done                                                                                           |
-| Assistant UI (panel, quick questions, every error state)                | Done, waiting for the backend                                                                  |
-| `POST /chat` endpoint                                                   | Not built yet. Until it exists, the panel shows "assistant unavailable" with the contact email |
-| Domain                                                                  | Not bought yet. Set `VITE_SITE_URL` once it exists                                             |
+| Part                                                                    | State                                                                                  |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Sections: hero, projects, experience, about, skills, education, contact | Done                                                                                   |
+| Spanish and English, light and dark theme                               | Done                                                                                   |
+| Assistant UI (panel, quick questions, every error state)                | Done                                                                                   |
+| `POST /api/chat` endpoint                                               | Built in `backend/`. With `VITE_API_URL` empty the panel shows "assistant unavailable" |
+| Domain                                                                  | Not bought yet. Set `VITE_SITE_URL` once it exists                                     |
 
 ## Requirements
 
@@ -98,7 +98,7 @@ Code that runs during render must work without `window`. Browser-only work belon
 - Enter sends and Shift+Enter adds a new line. The 1000-character limit shows a counter from 800 characters.
 - Error states: 429 shows the rate limit message, no connection shows the offline message, and anything else shows "unavailable" with a Retry button.
 - The conversation is kept in `sessionStorage` until the visitor starts a new one.
-- The request and response contract for the backend is in [`docs/architecture.md`](../docs/architecture.md). If an answer includes `sources`, the panel links each one ("Ver en: Proyectos").
+- The request and response contract for the backend is in [`docs/architecture.md`](../docs/architecture.md). If an answer has a `section`, the panel links to it ("Ver en: Proyectos"). A quick-question button sends its `quick_question_id`, so the backend answers it without calling a model.
 
 ### Visual system
 
@@ -117,7 +117,6 @@ Code that runs during render must work without `window`. Browser-only work belon
 
 ## Pending
 
-- Implement `POST /chat` in the backend.
 - Buy the domain and set `VITE_SITE_URL`.
 - Replace the temporary portrait in `public/img/` with a recent professional photo (keep the two sizes and the 3:4 ratio).
 - Add verification links to the Globant certificates if they become available (`verifyUrl` in `src/data/profileSections.ts`). Only the Anthropic one has one today.

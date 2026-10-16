@@ -131,6 +131,12 @@ export const en: Messages = {
     rateLimit: 'You have asked many questions in a row. Wait a minute and try again.',
     offline: 'No connection. Check your internet.',
     loading: 'Loading the assistant',
+    feedback: {
+      label: 'Was this answer helpful?',
+      helpful: 'Helpful',
+      notHelpful: 'Not helpful',
+      thanks: 'Thanks for your feedback.',
+    },
     sections: {
       projects: 'Projects',
       experience: 'Experience',

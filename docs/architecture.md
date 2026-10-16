@@ -3,11 +3,12 @@
 ```mermaid
 flowchart LR
   V[Visitor / recruiter] --> F[Frontend<br/>React + TypeScript<br/>Cloudflare Pages]
-  F -->|REST /api| B[Backend<br/>FastAPI<br/>Docker + Caddy on a VM]
+  F -->|REST| B[Backend<br/>FastAPI<br/>Docker + Caddy on a VM]
   B --> K[(Knowledge file<br/>ChatbotKnowledge.en.md)]
   B --> L1[Groq<br/>primary LLM]
   B -.fallback.-> L2[Gemini<br/>secondary LLM]
   B --> D[(PostgreSQL<br/>Neon)]
+  J[Daily retention job<br/>cron on the VM] --> D
 ```
 
 | Part | Responsibility |
@@ -15,26 +16,64 @@ flowchart LR
 | Frontend | Static single-page portfolio (ES/EN), CV download and the chat widget. Talks to the backend only through `src/services/api.ts`. |
 | Backend | Validates chat requests, builds the system prompt from the knowledge file, calls the LLM provider with failover, enforces rate limits and stores anonymous chat logs. |
 | Knowledge file | Single source of truth about Johan for the assistant. Versioned with the code. |
-| PostgreSQL | Anonymous log of questions asked to the assistant (no personal data), used to improve the knowledge file. |
+| PostgreSQL | Anonymous log of questions asked to the assistant (no personal data) and the visitors' ratings of the answers, used to improve the knowledge file. Rows are deleted after 90 days. |
 
-## Chat contract (frontend ready, backend pending)
+## Chat contract
 
-The chat UI is implemented and talks to a `POST /chat` endpoint that does not exist yet. Until it does, the panel shows the "assistant unavailable" state with the contact email. Types live in `frontend/src/services/api.ts`.
+`POST /api/chat`, implemented in `backend/app/api/routes/chat.py` and consumed by `frontend/src/services/api.ts`. How a question travels, and every failure mode, is in [`chat-flow.md`](chat-flow.md).
 
 ```jsonc
-// POST /chat
+// POST /api/chat
 { "message": "string, 1 to 1000 characters",
-  "locale": "es" | "en",                      // language of the site UI, the answer follows the question
-  "history": [{ "role": "user" | "assistant", "content": "string" }] }   // last 10 turns
+  "locale": "es" | "en",                       // language of the site UI; the answer follows the question
+  "history": [{ "role": "user" | "assistant", "content": "string" }],   // at most 6 earlier messages
+  "quick_question_id": "projects" | "stack" | "production" | "availability" | "challenge" | "ai" }  // optional
 
-// 200
+// 200 (also for refusals)
 { "answer": "plain text",
-  "sources": ["projects" | "experience" | "about" | "skills" | "education" | "contact"] }  // optional
+  "refused": false,                            // true: off topic or an attack, `answer` is a fixed text
+  "section": "projects" | "experience" | "about" | "skills" | "education" | "contact" | null,
+  "message_id": "uuid",
+  "request_id": "string" }
 
-// 429 rate limit per IP, 503 LLM unavailable: the UI has a message for each
+// Every error has the same body; clients branch on `code`, never on `message`
+{ "error": { "code": "rate_limited", "message": "text in the visitor's language",
+             "request_id": "string", "details": null } }
 ```
 
-`sources` is optional: when present, the UI links each section under the answer ("Ver en: Proyectos").
+| Status | `code` | Meaning |
+|---|---|---|
+| 422 | `invalid_request` | Body not valid (empty, over 1000 characters, unknown field, more than 6 history messages) |
+| 429 | `rate_limited` | Too many requests; `Retry-After` says when to try again |
+| 502 | `invalid_model_output` | The model answered twice without a usable answer |
+| 503 | `assistant_paused` | Switched off, or today's model budget is spent |
+| 503 | `assistant_unavailable` | No model could answer in time |
+
+When `section` is present, the UI links to that part of the page under the answer ("Ver en: Proyectos"). A quick-question id is answered from the knowledge file without calling a model.
+
+### Rating an answer
+
+`POST /api/chat/feedback`, in the same router. One rating per answer; sending it again, with the same value or the other one, is accepted and ignored, so the first rating wins.
+
+```jsonc
+// POST /api/chat/feedback
+{ "message_id": "uuid from the chat response",
+  "helpful": true,
+  "locale": "es" | "en" }                      // language of the error messages
+
+// 204, no body (also when the answer had already been rated)
+```
+
+| Status | `code` | Meaning |
+|---|---|---|
+| 404 | `not_found` | No such message in the log. The log is best effort, so an answer whose row could not be written cannot be rated |
+| 422 | `invalid_request` | Body not valid (not a UUID, `helpful` not a boolean, unknown field) |
+| 429 | `rate_limited` | More than 20 ratings a minute or 200 a day from one visitor; `Retry-After` says when to try again |
+| 503 | `feedback_unavailable` | No database, or it failed. The chat is not affected |
+
+### Retention
+
+`python -m app.jobs.purge_chat_log` deletes the messages older than `CHAT_LOG_RETENTION_DAYS` (90) and, by cascade, their ratings. It connects with `RETENTION_DATABASE_URL`, the user `portfolio_retention` (`SELECT` and `DELETE` only, created by `backend/sql/retention_role.sql`). The running app never has that URL.
 
 ## Frontend build
 
@@ -59,15 +98,19 @@ portfolio/
 │       └── test/          Test setup
 ├── backend/               FastAPI
 │   ├── app/
-│   │   ├── main.py        App factory: CORS and routers only
-│   │   ├── core/          Settings and cross-cutting helpers
-│   │   ├── api/routes/    Thin HTTP routers
+│   │   ├── main.py        App factory: middleware, error handlers, lifespan and routers
+│   │   ├── core/          Settings, JSON logs, errors, deadline and other cross-cutting helpers
+│   │   ├── api/           deps.py (what routes receive) and routes/ (thin HTTP routers)
 │   │   ├── schemas/       Pydantic request/response models
-│   │   ├── services/      Business logic (chat, knowledge loading)
-│   │   │   └── llm/       Groq and Gemini clients behind one interface
-│   │   ├── db/            Engine and sessions
+│   │   ├── services/      Business logic (chat, guard, feedback, retention, knowledge loading)
+│   │   │   └── llm/       Groq and Gemini clients behind one interface, and the router
+│   │   ├── jobs/          Commands run by cron, such as the retention job
+│   │   ├── db/            Engine, sessions and repositories
 │   │   └── models/        ORM models
-│   ├── knowledge/         Assistant knowledge file
+│   ├── alembic/           Migrations
+│   ├── sql/               schema.sql, roles.sql and retention_role.sql, run by hand once
+│   ├── knowledge/         Assistant knowledge files
+│   ├── evals/             Attack and recruiter-question set, run by hand against the real models
 │   └── tests/             pytest
 ├── deploy/                Caddyfile for the backend VM
 ├── docs/                  Architecture, decisions and screenshots

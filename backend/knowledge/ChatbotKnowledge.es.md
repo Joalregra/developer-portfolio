@@ -34,7 +34,7 @@ Este archivo es la única fuente de verdad del chatbot del portafolio. Los datos
 - Seniority: Junior
 - Foco principal: Python más React
 - Roles objetivo: Desarrollador Python, Desarrollador Backend Junior, Desarrollador JavaScript, Desarrollador Frontend Junior (React), DevOps Junior
-- Ubicación: San Jose, Caldas, Colombia
+- Ubicación: San José, Caldas, Colombia
 - Zona horaria: Colombia, GMT-5
 - Experiencia en resumen: 2 años de formación formal en el SENA más una práctica de 6 meses (abril de 2026 a 2026-10-07) como Desarrollador FullStack Practicante (aprendiz universitario PRD) en Globant.
 - Fortalezas demostradas en proyectos: APIs backend con FastAPI, pipelines impulsados por IA, sistemas RAG (búsqueda semántica), interfaces en React y pruebas automatizadas.
@@ -284,7 +284,7 @@ A: Junior. Johan tiene 2 años de formación formal en el SENA más una práctic
 A: El perfil de Johan es principalmente backend: Python, FastAPI, endpoints y sistemas RAG con arquitecturas impulsadas por IA. Johan también tiene experiencia en frontend con React, incluidas maquetas y diseño de interfaces. Los roles objetivo son Desarrollador Python, Desarrollador Backend Junior, Desarrollador JavaScript, Desarrollador Frontend Junior (React) y DevOps Junior.
 
 ### Q: ¿Cuál es tu disponibilidad, ubicación y modalidad de trabajo preferida?
-A: Johan está disponible para contratación inmediata y vive en San Jose, Caldas, Colombia (GMT-5). Johan prefiere trabajo remoto o híbrido y puede trabajar en las zonas horarias de Estados Unidos y Europa. Johan puede reubicarse para roles presenciales en Risaralda y Caldas y acepta viajes ocasionales. Tipos de contrato: tiempo completo, contratista (contractor) y freelance.
+A: Johan está disponible para contratación inmediata y vive en San José, Caldas, Colombia (GMT-5). Johan prefiere trabajo remoto o híbrido y puede trabajar en las zonas horarias de Estados Unidos y Europa. Johan puede reubicarse para roles presenciales en Risaralda y Caldas y acepta viajes ocasionales. Tipos de contrato: tiempo completo, contratista (contractor) y freelance.
 
 ### Q: ¿Cómo puedo contactarte? ¿Tienes un GitHub?
 A: Correo: johanalexis808@gmail.com. LinkedIn: https://www.linkedin.com/in/johan-rendon-granada-14b8a82bb. GitHub: https://github.com/Joalregra. El CV (PDF, en español y en inglés) se descarga desde el botón "Descargar CV" del portafolio.

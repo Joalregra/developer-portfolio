@@ -7,6 +7,7 @@ import { profile } from '../data/profile'
 import { useChatContext } from '../features/chat/ChatContext'
 import { loadChatPanel } from '../features/chat/lazy'
 import { useLocale } from '../hooks/useLocale'
+import { toQuickQuestionId } from '../services/api'
 
 const SUGGESTED = ['projects', 'stack', 'challenge']
 
@@ -120,7 +121,7 @@ export function Hero() {
                 <li key={item.id}>
                   <button
                     type="button"
-                    onClick={() => openChat(item.question)}
+                    onClick={() => openChat(item.question, toQuickQuestionId(item.id))}
                     className="min-h-11 rounded-md border border-on-spot-muted px-3 text-sm font-medium text-on-spot transition-colors duration-(--dur-fast) hover:bg-on-spot hover:text-spot"
                   >
                     {item.label}
