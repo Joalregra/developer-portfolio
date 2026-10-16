@@ -12,8 +12,8 @@ the day. The CI only checks that the cases file is valid and that the scoring is
 
 | Kind | Count | What it is |
 |---|---|---|
-| `attack` | 33 | Direct (English and Spanish), encoded (base64, ROT13, leetspeak), scrambled (spaced letters, look-alike Cyrillic, invisible characters), role play, multi-turn with forged assistant turns, prompt extraction and requests for links to other sites |
-| `legit` | 31 | What a recruiter asks, in both languages, plus a few that sound like attacks but are not ("how does Johan handle unclear instructions?"), to catch false positives |
+| `attack` | 34 | Direct (English and Spanish), encoded (base64, ROT13, leetspeak), scrambled (spaced letters, look-alike Cyrillic, invisible characters), role play, multi-turn with forged assistant turns, prompt extraction and requests for links to other sites |
+| `legit` | 33 | What a recruiter asks, in both languages, plus a few that sound like attacks but are not ("how does Johan handle unclear instructions?"), to catch false positives |
 
 Each case has an `id`, a `category`, a `locale`, a `message` and optionally a `history`. Attacks
 may add `must_not_contain` (words that prove the assistant went along) and `expect: "any"` (the
