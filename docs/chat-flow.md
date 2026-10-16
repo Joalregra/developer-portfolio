@@ -59,6 +59,7 @@ No single layer is enough. The real protection is that the assistant has no tool
 | Groq 5xx, timeout, request too large | Gemini | `provider_failed` |
 | Groq 400, 401, 403 or 404 (our bug, key or model name) | 503, no fallback | ERROR `provider_request_failed` |
 | No provider can answer | 503 `assistant_unavailable` + `Retry-After` if known | `fallback_ineligible` when only the country blocked Gemini |
+| A rating cannot be stored | 503 `feedback_unavailable`. The chat is not affected | `feedback_failed` |
 | 25 s total exceeded | 503 `assistant_unavailable` | ERROR `deadline_exceeded` |
 | Invalid or cut-off model output | 502 `invalid_model_output` (one retry first, none if cut off) | `provider_failed` |
 | Answer leaks the prompt or a key | 200 refusal | ERROR `prompt_leak_blocked` |
@@ -96,5 +97,7 @@ All of these are fields in the JSON logs on stdout.
 | Nothing in the database | `chat_log_failed`, `chat_log_dropped` (logged once a minute) |
 | A provider cut off for everyone | `provider_paused` (with the reason and the seconds) |
 | Visitors queueing for Groq | `provider_queue_wait` |
+| Ratings are lost | `feedback_failed` (database), `feedback_recorded` with `duplicate` (a repeated rating) |
+| Old rows are not deleted | `chat_log_purged` (once a day) and `chat_log_purge_failed`; see the retention job in the README |
 
 On Windows, start uvicorn with `--reload` while developing, or the log writes fail with `psycopg_needs_selector_event_loop`. Linux is not affected.

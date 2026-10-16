@@ -6,7 +6,7 @@ Short records of the main choices and why they were made.
 One repository, one README and one CI pipeline make the whole project reviewable in a single place.
 
 ## 2. Knowledge in the system prompt, no RAG
-The knowledge file is a few thousand words, so it fits comfortably in the model context. A vector database would add cost and moving parts without improving answers. RAG would be reconsidered if the content grew beyond the context window.
+The knowledge file is a few thousand words, so it fits comfortably in the model context (sections 1 to 8 go into the prompt, see decision 12). A vector database would add cost and moving parts without improving answers. RAG would be reconsidered if the content grew beyond the context window.
 
 ## 3. Groq as primary LLM, Gemini as fallback
 Both offer free tiers. The backend routes requests to Groq and fails over to Gemini when Groq is rate-limited or unavailable, so the assistant degrades gracefully instead of failing.
@@ -49,4 +49,10 @@ The browser sends earlier messages, so it could invent assistant turns. Only the
 
 ## 16. The page sections in the answer are the ids of the real page
 `projects`, `experience`, `about`, `skills`, `education` and `contact`, so the frontend can link to an anchor that exists. The backend brief used `profile` and `how_i_work`, which are not on the page.
+
+## 17. One rating per answer, and the first one wins
+`POST /api/chat/feedback` inserts with `ON CONFLICT DO NOTHING` against the unique `message_id`, so the database decides, not a `SELECT` before it: two clicks at the same time cannot both write. Rating again, even with the other value, answers 204 and changes nothing. That is simpler for the visitor than an error, and for the log than an `UPDATE`, which the app user is not allowed to do anyway. An unknown message is a 404 (the log is best effort, decision 7) and the widget keeps the visitor's rating on screen in that case, because sending it again cannot work. Ratings are limited per visitor so a script cannot fill the table.
+
+## 18. Retention is a daily command with its own database user
+Nothing in the app may delete, so the cleanup is a separate command, `python -m app.jobs.purge_chat_log`, run by cron on the VM from the same image (no extra service, and no dependency on what the database provider offers). It connects as `portfolio_retention`, which has only `SELECT` and `DELETE`. It deletes in batches of 1,000, oldest first, each in its own transaction, so it never holds a long lock on the table the chat writes to, and a run that stops halfway is finished by the next one. It exits with 1 on any failure so cron can tell.
 
