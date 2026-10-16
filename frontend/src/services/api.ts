@@ -37,6 +37,8 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
       await errorCode(response),
     )
   }
+  // 204 has no body (the feedback endpoint): there is nothing to parse.
+  if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }
 
@@ -81,9 +83,11 @@ export interface ChatResponse {
 
 /** The backend stops a chat at 25 s; the browser gives up a little later. */
 const CHAT_TIMEOUT_MS = 30_000
+/** A rating is a single insert: if it takes longer than this, it is not worth waiting for. */
+const FEEDBACK_TIMEOUT_MS = 10_000
 
-function withTimeout(signal?: AbortSignal): AbortSignal {
-  const timeout = AbortSignal.timeout(CHAT_TIMEOUT_MS)
+function withTimeout(milliseconds: number, signal?: AbortSignal): AbortSignal {
+  const timeout = AbortSignal.timeout(milliseconds)
   return signal ? AbortSignal.any([signal, timeout]) : timeout
 }
 
@@ -93,6 +97,24 @@ export function postChat(body: ChatRequest, signal?: AbortSignal): Promise<ChatR
   return request<ChatResponse>('/api/chat', {
     method: 'POST',
     body: JSON.stringify(body),
-    signal: withTimeout(signal),
+    signal: withTimeout(CHAT_TIMEOUT_MS, signal),
+  })
+}
+
+/** Contract of `POST /api/chat/feedback`: one rating per answer, repeating it changes nothing. */
+export interface FeedbackRequest {
+  /** The `message_id` that came with the answer. */
+  message_id: string
+  helpful: boolean
+  locale: Locale
+}
+
+/** Resolves with nothing (204). A 404 means the answer was never stored, so it cannot be rated. */
+export function postFeedback(body: FeedbackRequest): Promise<void> {
+  if (!API_URL) return Promise.reject(new ApiError(503, 'VITE_API_URL is not configured'))
+  return request<void>('/api/chat/feedback', {
+    method: 'POST',
+    body: JSON.stringify(body),
+    signal: withTimeout(FEEDBACK_TIMEOUT_MS),
   })
 }

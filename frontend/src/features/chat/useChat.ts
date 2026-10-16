@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Locale } from '../../data/profile'
 import { readStorage, removeStorage, writeStorage } from '../../lib/storage'
-import { ApiError, postChat, type ChatSection, type QuickQuestionId } from '../../services/api'
+import {
+  ApiError,
+  postChat,
+  postFeedback,
+  type ChatSection,
+  type QuickQuestionId,
+} from '../../services/api'
 
 export const MAX_LENGTH = 1000
 export const COUNTER_FROM = 800
@@ -17,6 +23,10 @@ export interface ChatMessage {
   section?: ChatSection
   /** Questions only: set when the text came from a quick-question button. */
   quick?: QuickQuestionId
+  /** Answers only: the id the backend gave it, needed to rate it. */
+  messageId?: string
+  /** Answers only: how the visitor rated it. One rating per answer. */
+  rating?: 'up' | 'down'
 }
 
 export type ChatError = 'unavailable' | 'rateLimit' | 'offline'
@@ -27,14 +37,21 @@ function restore(): ChatMessage[] {
   try {
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (item): item is ChatMessage =>
-        typeof item === 'object' &&
-        item !== null &&
-        typeof item.id === 'string' &&
-        (item.role === 'user' || item.role === 'assistant') &&
-        typeof item.content === 'string',
-    )
+    return parsed
+      .filter(
+        (item): item is ChatMessage =>
+          typeof item === 'object' &&
+          item !== null &&
+          typeof item.id === 'string' &&
+          (item.role === 'user' || item.role === 'assistant') &&
+          typeof item.content === 'string',
+      )
+      .map((item) => ({
+        ...item,
+        // Stored by the browser, so it is checked like any other input.
+        messageId: typeof item.messageId === 'string' ? item.messageId : undefined,
+        rating: item.rating === 'up' || item.rating === 'down' ? item.rating : undefined,
+      }))
   } catch {
     return []
   }
@@ -93,6 +110,7 @@ export function useChat(locale: Locale) {
             role: 'assistant',
             content: response.answer,
             section: response.section ?? undefined,
+            messageId: response.message_id,
           },
         ])
       } catch (caught) {
@@ -126,6 +144,27 @@ export function useChat(locale: Locale) {
     if (history.length > 0 && history[history.length - 1].role === 'user') void ask(history)
   }, [ask])
 
+  const rate = useCallback(
+    async (id: string, helpful: boolean) => {
+      const target = messagesRef.current.find((message) => message.id === id)
+      if (!target?.messageId || target.rating) return
+      const setRating = (rating: ChatMessage['rating']) =>
+        setMessages((previous) =>
+          previous.map((message) => (message.id === id ? { ...message, rating } : message)),
+        )
+      // Shown at once; taken back only if the rating can still be sent again later.
+      setRating(helpful ? 'up' : 'down')
+      try {
+        await postFeedback({ message_id: target.messageId, helpful, locale })
+      } catch (caught) {
+        // 404: the backend never stored this answer, so sending the rating again cannot work.
+        if (caught instanceof ApiError && caught.status === 404) return
+        setRating(undefined)
+      }
+    },
+    [locale],
+  )
+
   const reset = useCallback(() => {
     controller.current?.abort()
     messagesRef.current = []
@@ -134,7 +173,7 @@ export function useChat(locale: Locale) {
     setError(null)
   }, [])
 
-  return { messages, sending, error, send, retry, reset }
+  return { messages, sending, error, send, retry, rate, reset }
 }
 
 export type ChatState = ReturnType<typeof useChat>

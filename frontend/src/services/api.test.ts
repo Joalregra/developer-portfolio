@@ -39,6 +39,12 @@ describe('request', () => {
 
     await expect(request('/health')).resolves.toEqual({ status: 'ok' })
   })
+
+  it('resolves with nothing on a 204, which has no body to parse', async () => {
+    stubFetch(new Response(null, { status: 204 }))
+
+    await expect(request('/api/chat/feedback')).resolves.toBeUndefined()
+  })
 })
 
 describe('toQuickQuestionId', () => {

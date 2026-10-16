@@ -129,6 +129,12 @@ export const es = {
     rateLimit: 'Has hecho muchas preguntas seguidas. Espera un minuto e inténtalo de nuevo.',
     offline: 'Sin conexión. Revisa tu internet.',
     loading: 'Cargando el asistente',
+    feedback: {
+      label: '¿Te sirvió esta respuesta?',
+      helpful: 'Me sirvió',
+      notHelpful: 'No me sirvió',
+      thanks: 'Gracias por tu opinión.',
+    },
     sections: {
       projects: 'Proyectos',
       experience: 'Experiencia',

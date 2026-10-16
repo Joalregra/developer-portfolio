@@ -2,14 +2,16 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../../app/App'
-import { ApiError, postChat, type ChatResponse } from '../../services/api'
+import { ApiError, postChat, postFeedback, type ChatResponse } from '../../services/api'
 
 vi.mock('../../services/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/api')>()),
   postChat: vi.fn(),
+  postFeedback: vi.fn(),
 }))
 
 const mockedPostChat = vi.mocked(postChat)
+const mockedPostFeedback = vi.mocked(postFeedback)
 
 const reply = (answer: string, extra: Partial<ChatResponse> = {}): ChatResponse => ({
   answer,
@@ -29,6 +31,8 @@ async function openPanel(user: ReturnType<typeof userEvent.setup>) {
 beforeEach(() => {
   window.sessionStorage.clear()
   mockedPostChat.mockReset()
+  mockedPostFeedback.mockReset()
+  mockedPostFeedback.mockResolvedValue(undefined)
 })
 
 afterEach(() => {
@@ -264,6 +268,99 @@ describe('chat assistant', () => {
     await user.type(input, 'dos{Enter}')
     expect(await screen.findByText('Sin enlace.')).toBeInTheDocument()
     expect(within(dialog).getAllByRole('link', { name: 'Habilidades' })).toHaveLength(1)
+  })
+
+  it('rates an answer once and keeps the rating after a reload', async () => {
+    mockedPostChat.mockResolvedValue(reply('Respuesta útil.'))
+    const user = userEvent.setup()
+    render(<App initialLocale="es" />)
+    await openPanel(user)
+    await user.type(screen.getByLabelText('Tu pregunta para el asistente'), 'Hola{Enter}')
+    await screen.findByText('Respuesta útil.')
+
+    await user.click(screen.getByRole('button', { name: 'Me sirvió' }))
+
+    expect(mockedPostFeedback).toHaveBeenCalledWith({
+      message_id: '3f2b1c9e-0000-4000-8000-000000000001',
+      helpful: true,
+      locale: 'es',
+    })
+    expect(await screen.findByText('Gracias por tu opinión.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Me sirvió' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Me sirvió' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'No me sirvió' })).toBeDisabled()
+    const saved = JSON.parse(window.sessionStorage.getItem('chat:v1') ?? '[]')
+    expect(saved[1]).toMatchObject({ role: 'assistant', rating: 'up' })
+  })
+
+  it('sends a negative rating with helpful false', async () => {
+    mockedPostChat.mockResolvedValue(reply('Respuesta floja.'))
+    const user = userEvent.setup()
+    render(<App initialLocale="en" />)
+    await user.click(screen.getByRole('button', { name: 'Ask my assistant' }))
+    await screen.findByRole('dialog', {}, { timeout: 5000 })
+    await user.type(screen.getByLabelText('Your question for the assistant'), 'Hi{Enter}')
+    await screen.findByText('Respuesta floja.')
+
+    await user.click(screen.getByRole('button', { name: 'Not helpful' }))
+
+    expect(mockedPostFeedback).toHaveBeenCalledWith(
+      expect.objectContaining({ helpful: false, locale: 'en' }),
+    )
+    expect(await screen.findByText('Thanks for your feedback.')).toBeInTheDocument()
+  })
+
+  it('lets the visitor try again when the rating could not be sent', async () => {
+    mockedPostChat.mockResolvedValue(reply('Respuesta.'))
+    mockedPostFeedback.mockRejectedValueOnce(new ApiError(503, 'down', 'feedback_unavailable'))
+    const user = userEvent.setup()
+    render(<App initialLocale="es" />)
+    await openPanel(user)
+    await user.type(screen.getByLabelText('Tu pregunta para el asistente'), 'Hola{Enter}')
+    await screen.findByText('Respuesta.')
+
+    await user.click(screen.getByRole('button', { name: 'Me sirvió' }))
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Me sirvió' })).toBeEnabled())
+    expect(screen.queryByText('Gracias por tu opinión.')).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Me sirvió' }))
+    expect(await screen.findByText('Gracias por tu opinión.')).toBeInTheDocument()
+    expect(mockedPostFeedback).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps the rating when the backend never stored the answer (404)', async () => {
+    mockedPostChat.mockResolvedValue(reply('Respuesta.'))
+    mockedPostFeedback.mockRejectedValue(new ApiError(404, 'gone', 'not_found'))
+    const user = userEvent.setup()
+    render(<App initialLocale="es" />)
+    await openPanel(user)
+    await user.type(screen.getByLabelText('Tu pregunta para el asistente'), 'Hola{Enter}')
+    await screen.findByText('Respuesta.')
+
+    await user.click(screen.getByRole('button', { name: 'No me sirvió' }))
+
+    expect(await screen.findByText('Gracias por tu opinión.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'No me sirvió' })).toBeDisabled()
+    expect(mockedPostFeedback).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers no rating for the visitor questions or for answers saved without an id', async () => {
+    window.sessionStorage.setItem(
+      'chat:v1',
+      JSON.stringify([
+        { id: 'a', role: 'user', content: 'Pregunta guardada' },
+        { id: 'b', role: 'assistant', content: 'Respuesta guardada' },
+      ]),
+    )
+    const user = userEvent.setup()
+    render(<App initialLocale="es" />)
+    await openPanel(user)
+
+    expect(screen.getByText('Respuesta guardada')).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: '¿Te sirvió esta respuesta?' })).toBeNull()
   })
 
   it('treats a paused assistant like an unavailable one, with the email', async () => {
