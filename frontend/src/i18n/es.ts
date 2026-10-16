@@ -63,6 +63,10 @@ export const es = {
   experience: {
     title: 'Experiencia',
     seeProject: 'Ver el proyecto',
+    letterLabel: 'Carta de recomendación',
+    letterLink: 'Leer la carta completa',
+    letterOriginal: 'Carta original en inglés',
+    letterConfirm: 'Pablo puede confirmar esta carta. Para hablar con él, escríbeme a',
   },
   about: {
     title: 'Sobre mí',

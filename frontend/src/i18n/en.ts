@@ -65,6 +65,10 @@ export const en: Messages = {
   experience: {
     title: 'Experience',
     seeProject: 'See the project',
+    letterLabel: 'Recommendation letter',
+    letterLink: 'Read the full letter',
+    letterOriginal: 'Original letter in English',
+    letterConfirm: 'Pablo can confirm this letter. To speak with him, email me at',
   },
   about: {
     title: 'About',
