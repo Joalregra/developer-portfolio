@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     # Database. The app user can only INSERT and SELECT (DATA-07); migrations use the owner.
     database_url: SecretStr | None = None
     migration_database_url: SecretStr | None = None
+    # Only the retention job reads it (user portfolio_retention: SELECT and DELETE). The running
+    # app never needs it, so it can stay unset there.
+    retention_database_url: SecretStr | None = None
     chat_log_retention_days: int = Field(default=90, gt=0)
 
     # LLM providers. Model names are configuration, not code: free tiers change often (LLM-01).

@@ -5,9 +5,10 @@
 -- On Neon you can also paste the whole file into the SQL editor. It is one transaction: if any
 -- statement fails, nothing is created, so you can fix it and run it again.
 --
--- Afterwards run backend/sql/roles.sql, then `alembic stamp head` from backend/ so Alembic knows
--- the database is already at revision 0001. This file and alembic/versions/0001_*.py must
--- describe exactly the same schema.
+-- Afterwards run backend/sql/roles.sql and backend/sql/retention_role.sql, then
+-- `alembic stamp head` from backend/ so Alembic knows the database is already at the latest
+-- revision. This file always describes the latest schema, the same one the migrations in
+-- alembic/versions/ reach when they are applied in order.
 --
 -- No IP, user agent, email or other identifier is stored (rule DATA-03).
 

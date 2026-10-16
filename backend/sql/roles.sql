@@ -12,7 +12,8 @@
 -- the Neon console (Roles) instead, delete the CREATE ROLE statement below and run the rest.
 --
 -- The app can only INSERT and SELECT. It cannot UPDATE, DELETE or change the schema, so a bug or
--- an injection in the app cannot erase the log. Migrations and the retention job use the owner.
+-- an injection in the app cannot erase the log. Migrations use the owner; the retention job has
+-- its own user, created by retention_role.sql.
 
 BEGIN;
 
