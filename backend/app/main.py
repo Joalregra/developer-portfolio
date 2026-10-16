@@ -15,6 +15,7 @@ from app.core.errors import register_exception_handlers
 from app.core.logging import RequestContextMiddleware, configure_logging
 from app.db.session import create_engine, create_session_factory, warn_if_event_loop_unsupported
 from app.services.chat_setup import ChatRuntime, build_chat_runtime
+from app.services.feedback import FeedbackService
 from app.services.knowledge import load_knowledge
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,8 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Create the database engine and the chat service once, and close them on shutdown.
+    """Create the database engine and the chat and feedback services once, and close them on
+    shutdown.
 
     Without `DATABASE_URL` there is no engine: the chat still works, it just logs nothing.
     If the chat is switched on but a setting is missing, the app does not start.
@@ -37,6 +39,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     else:
         # A typo in the production environment would otherwise disable the log silently.
         logger.warning("database_not_configured")
+    app.state.feedback_service = FeedbackService.with_default_limits(app.state.session_factory)
     if settings.is_production and "FORWARDED_ALLOW_IPS" not in os.environ:
         # Without it every visitor looks like the proxy and shares one rate limit (SEC-03).
         logger.warning("forwarded_allow_ips_not_set")
@@ -64,6 +67,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.knowledge = load_knowledge(settings.knowledge_dir)
     app.state.session_factory = None
     app.state.chat_service = None
+    app.state.feedback_service = None
 
     # Each call wraps the previous ones, so the last one added is the outermost layer.
     # Order, outside to inside: request context -> CORS -> body size limit. The outermost layer

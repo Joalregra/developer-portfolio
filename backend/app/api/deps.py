@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import Settings
 from app.services.chat_service import ChatService
+from app.services.feedback import FeedbackService
 from app.services.knowledge import Knowledge
 from app.services.rate_limit import client_key
 
@@ -42,6 +43,12 @@ def get_chat_service(request: Request) -> ChatService | None:
     return service
 
 
+def get_feedback_service(request: Request) -> FeedbackService | None:
+    """Return the feedback service, or None when the app was built without one."""
+    service: FeedbackService | None = request.app.state.feedback_service
+    return service
+
+
 def get_client_key(request: Request) -> str:
     """Who is asking, for the rate limiter.
 
@@ -64,5 +71,6 @@ def get_country(request: Request, settings: SettingsDep) -> str | None:
 SessionFactoryDep = Annotated[async_sessionmaker[AsyncSession] | None, Depends(get_session_factory)]
 KnowledgeDep = Annotated[Knowledge, Depends(get_knowledge)]
 ChatServiceDep = Annotated[ChatService | None, Depends(get_chat_service)]
+FeedbackServiceDep = Annotated[FeedbackService | None, Depends(get_feedback_service)]
 ClientKeyDep = Annotated[str, Depends(get_client_key)]
 CountryDep = Annotated[str | None, Depends(get_country)]

@@ -60,6 +60,16 @@ class NotFoundError(AppError):
     )
 
 
+class MessageNotFoundError(NotFoundError):
+    """A rating refers to a message that is not in the log: it never existed, was deleted after
+    the retention period, or its row could not be written (the log is best effort)."""
+
+    messages = _messages(
+        en="That answer is no longer available to rate.",
+        es="Esa respuesta ya no está disponible para valorar.",
+    )
+
+
 class InvalidRequestError(AppError):
     """The request is well formed but has nothing to answer, for example only invisible text."""
 
@@ -104,6 +114,17 @@ class AssistantUnavailableError(AppError):
     messages = _messages(
         en="The assistant is unavailable right now. You can contact Johan by email.",
         es="El asistente no está disponible ahora. Puedes escribirle a Johan por correo.",
+    )
+
+
+class FeedbackUnavailableError(AppError):
+    """The rating could not be stored: no database, or it failed. The chat is not affected."""
+
+    status_code = 503
+    code = "feedback_unavailable"
+    messages = _messages(
+        en="Your rating could not be saved right now.",
+        es="No se pudo guardar tu valoración ahora.",
     )
 
 

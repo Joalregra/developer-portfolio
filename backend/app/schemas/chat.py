@@ -56,6 +56,16 @@ class ChatResponse(BaseModel):
     request_id: str
 
 
+class FeedbackRequest(BaseModel):
+    """A visitor's rating of one answer. Sent once per answer; repeating it changes nothing."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    message_id: UUID = Field(description="The `message_id` the chat returned with the answer.")
+    helpful: bool
+    locale: Locale = Field(description="Language of the error messages, as in the chat request.")
+
+
 class ModelAnswer(BaseModel):
     """What the model must return. Flat on purpose: no $ref and no unions, so every provider
     accepts the schema (Gemini rejects references; Groq strict mode needs every field required).
