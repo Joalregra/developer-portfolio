@@ -13,6 +13,10 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     channel: process.env.PW_CHANNEL || undefined,
+    // The checks measure where things end up. The assistant panel scales in, so on a slow
+    // runner a measure taken while it opens is a few pixels off; the app turns motion off
+    // under this setting, so the box is final as soon as it appears.
+    reducedMotion: 'reduce',
     trace: 'retain-on-failure',
   },
   webServer: {
