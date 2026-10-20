@@ -59,12 +59,27 @@ export const en: Messages = {
       "It runs in production in the company's private environment. I can walk through the architecture and my decisions in an interview.",
     ndaNote:
       'The work is covered by a confidentiality agreement. I can walk through the architecture and my decisions in an interview.',
-    demoPending: 'Demo with test data in progress',
+    demo: 'Demo',
+    demoIntro:
+      'Public demo with fictitious data, which resets every day at 3:00 a.m. (Colombia time). No sign-up needed: on the login screen, pick a role under "Entrar sin registrarte" ("Enter without registering"). The interface is in Spanish.',
+    demoLink: 'Open the Gedocs demo',
+    zoom: (alt: string) => `Enlarge image: ${alt}`,
+    lightbox: {
+      label: 'Enlarged image',
+      close: 'Close the enlarged view',
+      previous: 'Previous image',
+      next: 'Next image',
+      count: (n: number, total: number) => `${n} of ${total}`,
+    },
     ask: 'Ask the assistant about this project',
   },
   experience: {
     title: 'Experience',
     seeProject: 'See the project',
+    letterLabel: 'Recommendation letter',
+    letterLink: 'Read the full letter',
+    letterOriginal: 'Original letter in English',
+    letterConfirm: 'Pablo can confirm this letter. To speak with him, email me at',
   },
   about: {
     title: 'About',

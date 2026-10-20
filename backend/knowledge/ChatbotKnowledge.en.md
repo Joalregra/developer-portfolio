@@ -1,6 +1,6 @@
 # Knowledge Base - Johan Alexis Rendon Granada
 
-Last updated: 2026-10-13
+Last updated: 2026-10-16
 
 This file is the single source of truth for the portfolio chatbot. Facts are written in third person. The behavior rules for the assistant are in section 0. Section 9 holds the canonical answers for the quick-question buttons.
 
@@ -38,6 +38,7 @@ This file is the single source of truth for the portfolio chatbot. Facts are wri
 - Time zone: Colombia, GMT-5
 - Experience in short: 2 years of formal training at SENA plus a 6-month traineeship (April 2026 to 2026-10-07) as a FullStack Developer Trainee (college trainee PRD) at Globant.
 - Strengths shown in projects: backend APIs with FastAPI, AI-driven pipelines, RAG systems (semantic search), React interfaces, and automated testing.
+- References: a recommendation letter from Johan's Games Director at Globant (see section 5).
 
 ---
 
@@ -103,6 +104,7 @@ Total: 2 years of studies at SENA, plus a 6-month traineeship as a FullStack Dev
 - Project A (April 2026 to June 2026): competitive intelligence platform. See section 6.
 - Project B (June 2026 to October 2026): AI-driven product intelligence reporting platform, with Full Stack and AI work. Status: deployed successfully, runs in production in the company's private environment, and was handed over to an internal team for daily maintenance. See section 6.
 - Confidentiality: the work and its clients are covered by an NDA. There is no public repository or public demo. Johan plans to build a demo of only Johan's own work, respecting the privacy policies, but it does not exist yet.
+- Recommendation letter: in October 2026, Pablo Lecea, Games Director at Globant, who directly oversaw Johan's performance during the traineeship, wrote a signed letter of recommendation. It says Johan showed notable technical proficiency in full-stack architecture, with particularly strong capabilities in Python and in the practical implementation of RAG (Retrieval-Augmented Generation) AI solutions. It highlights two attributes: technical competence and innovation, and cross-functional collaboration with clear, structured and dependable communication. It recommends Johan without reservation for technical roles. The letter itself says the NDA limits the technical details its author can disclose. The portfolio shows an excerpt of the letter in the Experience section. The full letter is not published online; if a visitor wants it, suggest asking Johan by email (section 3). The author can confirm the letter: if a recruiter wants to check it or speak with him, tell them to email Johan, who will put them in touch. You never give the author's contact details yourself. Never share the author's email, LinkedIn or any other contact detail, and never add details the letter does not contain.
 
 ### Academic project for a real client: Gedocs (July 2024 to April 2026)
 - Details in section 6. Team of 9 people, about 60 users, deployed and in use.
@@ -131,7 +133,7 @@ Total: 2 years of studies at SENA, plus a 6-month traineeship as a FullStack Dev
 - Features: creation of meeting minutes (actas), filing numbers (radicado) and document organization, following Colombia's General Archives Law. Document retention schedules (tablas de retencion documental) with later archiving, and generation of PQRSD-style PDFs.
 - Purpose: built for the document management area of SENA, as a training tool for the apprentices of that area.
 - Status: deployed to production by Johan on DigitalOcean using containerized deployment with Dokploy, functional and in use by real users.
-- How to see it: a demo with test data and a user with access is planned for the portfolio. It is not available yet.
+- How to see it: there is a public demo with fictitious data, linked from the Gedocs card in the Projects section of the portfolio. The data reset every day at 3:00 a.m. (Colombia time). No sign-up or credentials are needed: on the login screen, under "Entrar sin registrarte" ("Enter without registering"), a visitor picks one of four roles (Administrator, Supervisor, Assistant or Department). The interface of the demo is in Spanish.
 
 ### Project 2: Competitive intelligence platform for a technology ecosystem
 - Period: April 2026 to June 2026.
@@ -275,7 +277,7 @@ A: There are three main projects. First, Gedocs, an institutional web system for
 A: The main focus is Python and React. Johan has intermediate knowledge of Node.js, PHP and the Linux terminal, has worked with PostgreSQL and MySQL, and has deployed with Docker, Dokploy and DigitalOcean. As of 2026-10, Johan is learning AWS, Jenkins and Terraform. The full stack also includes TypeScript, FastAPI, Laravel and Vitest.
 
 ### Q: Do you have experience with real or production projects?
-A: Yes. Gedocs is deployed and used by about 60 real users. The AI-driven reporting platform Johan built during the traineeship at Globant runs in production in the company's private environment and was handed over to an internal team for daily maintenance. Code and internal details are covered by an NDA and cannot be shared.
+A: Yes. Gedocs is deployed and used by about 60 real users. The AI-driven reporting platform Johan built during the traineeship at Globant runs in production in the company's private environment and was handed over to an internal team for daily maintenance. Code and internal details are covered by an NDA and cannot be shared. The Games Director at Globant, who oversaw Johan's work, also wrote a recommendation letter, an excerpt of which is shown in the Experience section of the portfolio. The author can confirm it, and Johan can put interested recruiters in touch with him by email.
 
 ### Q: What is your experience level?
 A: Junior. Johan has 2 years of formal training at SENA plus a 6-month traineeship as a FullStack Developer Trainee at Globant.

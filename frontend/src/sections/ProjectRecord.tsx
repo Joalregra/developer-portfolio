@@ -6,6 +6,7 @@ import { useChatContext } from '../features/chat/ChatContext'
 import { useLocale } from '../hooks/useLocale'
 import { formatMonthRange } from '../lib/format'
 import { ProjectDiagram } from './diagrams/ProjectDiagram'
+import { ProjectDemo } from './ProjectDemo'
 
 const subheading = 'heading text-lg'
 
@@ -99,7 +100,9 @@ export function ProjectRecord({ project }: { project: Project }) {
             {project.runsInPrivateProduction ? t.projects.ndaNoteProduction : t.projects.ndaNote}
           </p>
         )}
-        {project.demoPending && <p className="text-ink-muted">{t.projects.demoPending}</p>}
+        {project.demo && (
+          <ProjectDemo demo={project.demo} headingClassName={subheading} titleId={titleId} />
+        )}
 
         {hasDetail && (
           <details className="group">

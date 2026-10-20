@@ -30,32 +30,37 @@ export function Hero() {
       <div
         className={`${containerClass} grid gap-5 md:gap-8 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_26rem] lg:gap-x-16 lg:gap-y-10`}
       >
-        <div className="lg:col-start-1 lg:row-start-1">
-          <div className="flex items-center gap-4 md:gap-6">
-            {/* Temporary photo; served at most at 2x the displayed size (HERO-05). */}
-            <img
-              src="/img/johan-240.webp"
-              srcSet="/img/johan-144.webp 144w, /img/johan-240.webp 240w"
-              sizes="(min-width: 768px) 120px, 60px"
-              width={240}
-              height={320}
-              alt={t.hero.photoAlt}
-              fetchPriority="high"
-              className="h-20 w-15 shrink-0 rounded-md border border-line object-cover md:h-40 md:w-30"
-            />
-            <h1 id="hero-title" className="display text-[clamp(2.25rem,7vw,4.5rem)]">
-              {profile.name}
-            </h1>
-          </div>
-          <p className="mt-3 max-w-[36ch] text-base font-medium sm:text-lg md:mt-4 md:text-xl">
-            {profile.role[locale]}
-          </p>
-          <div className="mt-3 space-y-1">
-            <p className="text-ink-muted">{profile.location[locale]}</p>
-            <p className="font-semibold text-accent">{profile.availability[locale]}</p>
+        {/* Below lg the two parts are grid items, so the actions can move after the assistant on
+            the narrowest phones; from lg on this is one block in the left column. */}
+        <div className="contents lg:col-start-1 lg:row-start-1 lg:block">
+          <div>
+            <div className="flex items-center gap-4 md:gap-6">
+              {/* Temporary photo; served at most at 2x the displayed size (HERO-05). */}
+              <img
+                src="/img/johan-240.webp"
+                srcSet="/img/johan-144.webp 144w, /img/johan-240.webp 240w"
+                sizes="(min-width: 768px) 120px, 60px"
+                width={240}
+                height={320}
+                alt={t.hero.photoAlt}
+                fetchPriority="high"
+                className="h-20 w-15 shrink-0 rounded-md border border-line object-cover md:h-40 md:w-30"
+              />
+              <h1 id="hero-title" className="display text-[clamp(2.25rem,7vw,4.5rem)]">
+                {profile.name}
+              </h1>
+            </div>
+            <p className="mt-3 max-w-[36ch] text-base font-medium sm:text-lg md:mt-4 md:text-xl">
+              {profile.role[locale]}
+            </p>
+            <div className="mt-3 space-y-1">
+              <p className="text-ink-muted">{profile.location[locale]}</p>
+              <p className="font-semibold text-accent">{profile.availability[locale]}</p>
+            </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2 md:mt-6">
+          {/* Under 360 px the assistant field would sit below the fold, so the actions follow it. */}
+          <div className="order-1 flex flex-wrap items-center gap-2 min-[360px]:order-0 md:-mt-2 lg:mt-6">
             <Button variant="primary" href={`mailto:${profile.email}`}>
               <MailIcon />
               {t.hero.contact}
@@ -133,7 +138,9 @@ export function Hero() {
           <p className="mt-4 text-sm text-on-spot-muted">{t.hero.notice}</p>
         </aside>
 
-        <p className="measure text-lg lg:col-start-1 lg:row-start-2">{profile.valueProp[locale]}</p>
+        <p className="measure order-2 text-lg min-[360px]:order-0 lg:col-start-1 lg:row-start-2">
+          {profile.valueProp[locale]}
+        </p>
       </div>
     </section>
   )

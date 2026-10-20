@@ -4,6 +4,7 @@ import { LinkedText } from '../../components/ui/LinkedText'
 import { useLocale } from '../../hooks/useLocale'
 import { profile } from '../../data/profile'
 import { useChatContext } from './ChatContext'
+import { QuickQuestions } from './QuickQuestions'
 
 export function MessageList() {
   const { t } = useLocale()
@@ -20,9 +21,10 @@ export function MessageList() {
       role="log"
       aria-live="polite"
       aria-label={t.chat.title}
-      className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4"
+      className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4 py-4"
     >
-      <p className="measure text-ink-muted">{t.chat.greeting}</p>
+      <p className="measure">{t.chat.greeting}</p>
+      {messages.length === 0 && <QuickQuestions />}
 
       {messages.map((message) => {
         const fromUser = message.role === 'user'

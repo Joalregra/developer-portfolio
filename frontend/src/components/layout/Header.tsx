@@ -46,7 +46,7 @@ export function Header() {
       <div className={`${containerClass} flex h-(--header-h) items-center justify-between gap-2`}>
         <a
           href="#top"
-          className="display -mb-px inline-flex min-h-11 items-center text-xl whitespace-nowrap"
+          className="display -mb-px inline-flex min-h-11 items-center text-lg whitespace-nowrap min-[360px]:text-xl"
         >
           {profile.shortName}
         </a>

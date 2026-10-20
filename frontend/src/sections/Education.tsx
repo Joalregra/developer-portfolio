@@ -1,5 +1,5 @@
 import { ExternalLink } from '../components/ui/ExternalLink'
-import { FileIcon } from '../components/ui/icons'
+import { PdfLink } from '../components/ui/PdfLink'
 import { Section } from '../components/ui/Section'
 import { certifications, education } from '../data/profileSections'
 import { useLocale } from '../hooks/useLocale'
@@ -36,19 +36,9 @@ export function Education() {
                   <p className="tabular-nums">{certification.detail[locale]}</p>
                 )}
                 {certification.pdf && (
-                  <a
-                    href={certification.pdf.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 inline-flex min-h-11 items-center gap-2 font-semibold text-accent"
-                  >
-                    <FileIcon size={16} />
-                    <span className="underline underline-offset-4">{t.education.viewPdf}</span>
-                    <span className="font-normal text-ink-muted">
-                      (PDF, {certification.pdf.kb} KB)
-                    </span>
-                    <span className="sr-only"> {t.external}</span>
-                  </a>
+                  <PdfLink href={certification.pdf.href} kb={certification.pdf.kb}>
+                    {t.education.viewPdf}
+                  </PdfLink>
                 )}
                 {certification.verifyUrl && (
                   <ExternalLink href={certification.verifyUrl} className="-ml-2">

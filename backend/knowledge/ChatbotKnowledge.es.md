@@ -1,6 +1,6 @@
 # Base de conocimiento - Johan Alexis Rendon Granada
 
-Última actualización: 2026-10-13
+Última actualización: 2026-10-16
 
 Este archivo es la única fuente de verdad del chatbot del portafolio. Los datos están escritos en tercera persona. Las reglas de comportamiento del asistente están en la sección 0. La sección 9 contiene las respuestas canónicas para los botones de preguntas rápidas.
 
@@ -38,6 +38,7 @@ Este archivo es la única fuente de verdad del chatbot del portafolio. Los datos
 - Zona horaria: Colombia, GMT-5
 - Experiencia en resumen: 2 años de formación formal en el SENA más una práctica de 6 meses (abril de 2026 a 2026-10-07) como Desarrollador FullStack Practicante (aprendiz universitario PRD) en Globant.
 - Fortalezas demostradas en proyectos: APIs backend con FastAPI, pipelines impulsados por IA, sistemas RAG (búsqueda semántica), interfaces en React y pruebas automatizadas.
+- Referencias: una carta de recomendación del Games Director de Globant para Johan (ver sección 5).
 
 ---
 
@@ -103,6 +104,7 @@ Total: 2 años de estudios en el SENA, más una práctica de 6 meses como Desarr
 - Proyecto A (abril de 2026 a junio de 2026): plataforma de inteligencia competitiva. Ver sección 6.
 - Proyecto B (junio de 2026 a octubre de 2026): plataforma de reportes de inteligencia de producto impulsada por IA, con trabajo Full Stack y de IA. Estado: desplegada con éxito, corre en producción en el entorno privado de la empresa y se entregó a un equipo interno para su mantenimiento diario. Ver sección 6.
 - Confidencialidad: el trabajo y sus clientes están cubiertos por un NDA. No hay repositorio público ni demo pública. Johan planea construir una demo solo con su propio trabajo, respetando las políticas de privacidad, pero aún no existe.
+- Carta de recomendación: en octubre de 2026, Pablo Lecea, Games Director de Globant, quien supervisó directamente el desempeño de Johan durante la práctica, escribió una carta de recomendación firmada. Dice que Johan mostró una notable competencia técnica en arquitectura full stack, con capacidades especialmente sólidas en Python y en la implementación práctica de soluciones de IA con RAG (generación aumentada por recuperación). Destaca dos atributos: competencia técnica e innovación, y colaboración multidisciplinaria con una comunicación clara, estructurada y confiable. Recomienda a Johan sin reservas para puestos técnicos. La propia carta dice que el NDA limita los detalles técnicos que su autor puede revelar. El portafolio muestra un extracto de la carta en la sección Experiencia. La carta completa no está publicada en línea; si un visitante la quiere, sugiere pedírsela a Johan por correo (sección 3). El autor puede confirmar la carta: si un reclutador quiere verificarla o hablar con él, dile que escriba a Johan, quien lo pondrá en contacto. Tú nunca das los datos de contacto del autor. Nunca compartas el correo, el LinkedIn ni ningún otro dato de contacto del autor, y nunca añadas detalles que la carta no contiene.
 
 ### Proyecto académico para un cliente real: Gedocs (julio de 2024 a abril de 2026)
 - Detalles en la sección 6. Equipo de 9 personas, unos 60 usuarios, desplegado y en uso.
@@ -131,7 +133,7 @@ Total: 2 años de estudios en el SENA, más una práctica de 6 meses como Desarr
 - Funcionalidades: creación de actas, números de radicado y organización documental, conforme a la Ley General de Archivos de Colombia. Tablas de retención documental con archivado posterior, y generación de PDF tipo PQRSD.
 - Propósito: construido para el área de gestión documental del SENA, como herramienta formativa para los aprendices de esa área.
 - Estado: desplegado a producción por Johan en DigitalOcean mediante un despliegue en contenedores con Dokploy, funcional y en uso por usuarios reales.
-- Cómo verlo: se planea una demo con datos de prueba y un usuario con acceso para el portafolio. Aún no está disponible.
+- Cómo verlo: hay una demo pública con datos ficticios, enlazada desde la tarjeta de Gedocs en la sección Proyectos del portafolio. Los datos se reinician cada día a las 3:00 a. m. (hora de Colombia). No hace falta registrarse ni usar credenciales: en la pantalla de inicio, en «Entrar sin registrarte», el visitante elige uno de cuatro roles (Administrador, Supervisor, Auxiliar o Dependencia). La interfaz de la demo está en español.
 
 ### Proyecto 2: Plataforma de inteligencia competitiva para un ecosistema tecnológico
 - Periodo: abril de 2026 a junio de 2026.
@@ -275,7 +277,7 @@ A: Hay tres proyectos principales. Primero, Gedocs, un sistema web institucional
 A: El foco principal es Python y React. Johan tiene conocimiento intermedio de Node.js, PHP y la terminal de Linux, ha trabajado con PostgreSQL y MySQL, y ha desplegado con Docker, Dokploy y DigitalOcean. A octubre de 2026, Johan está aprendiendo AWS, Jenkins y Terraform. El stack completo incluye también TypeScript, FastAPI, Laravel y Vitest.
 
 ### Q: ¿Tienes experiencia en proyectos reales o de producción?
-A: Sí. Gedocs está desplegado y lo usan unos 60 usuarios reales. La plataforma de reportes impulsada por IA que Johan construyó durante la práctica en Globant corre en producción en el entorno privado de la empresa y se entregó a un equipo interno para su mantenimiento diario. El código y los detalles internos están cubiertos por un NDA y no se pueden compartir.
+A: Sí. Gedocs está desplegado y lo usan unos 60 usuarios reales. La plataforma de reportes impulsada por IA que Johan construyó durante la práctica en Globant corre en producción en el entorno privado de la empresa y se entregó a un equipo interno para su mantenimiento diario. El código y los detalles internos están cubiertos por un NDA y no se pueden compartir. El Games Director de Globant, quien supervisó el trabajo de Johan, también escribió una carta de recomendación, de la cual se muestra un extracto en la sección Experiencia del portafolio. El autor puede confirmarla, y Johan puede poner en contacto con él, por correo, a los reclutadores interesados.
 
 ### Q: ¿Cuál es tu nivel de experiencia (Junior, Mid, Senior)?
 A: Junior. Johan tiene 2 años de formación formal en el SENA más una práctica de 6 meses como Desarrollador FullStack Practicante en Globant.
