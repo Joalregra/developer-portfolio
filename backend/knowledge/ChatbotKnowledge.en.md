@@ -133,7 +133,7 @@ Total: 2 years of studies at SENA, plus a 6-month traineeship as a FullStack Dev
 - Features: creation of meeting minutes (actas), filing numbers (radicado) and document organization, following Colombia's General Archives Law. Document retention schedules (tablas de retencion documental) with later archiving, and generation of PQRSD-style PDFs.
 - Purpose: built for the document management area of SENA, as a training tool for the apprentices of that area.
 - Status: deployed to production by Johan on DigitalOcean using containerized deployment with Dokploy, functional and in use by real users.
-- How to see it: a demo with test data and a user with access is planned for the portfolio. It is not available yet.
+- How to see it: there is a public demo with fictitious data, linked from the Gedocs card in the Projects section of the portfolio. The data reset every day at 3:00 a.m. (Colombia time). No sign-up or credentials are needed: on the login screen, under "Entrar sin registrarte" ("Enter without registering"), a visitor picks one of four roles (Administrator, Supervisor, Assistant or Department). The interface of the demo is in Spanish.
 
 ### Project 2: Competitive intelligence platform for a technology ecosystem
 - Period: April 2026 to June 2026.

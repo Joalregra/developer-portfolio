@@ -133,7 +133,7 @@ Total: 2 años de estudios en el SENA, más una práctica de 6 meses como Desarr
 - Funcionalidades: creación de actas, números de radicado y organización documental, conforme a la Ley General de Archivos de Colombia. Tablas de retención documental con archivado posterior, y generación de PDF tipo PQRSD.
 - Propósito: construido para el área de gestión documental del SENA, como herramienta formativa para los aprendices de esa área.
 - Estado: desplegado a producción por Johan en DigitalOcean mediante un despliegue en contenedores con Dokploy, funcional y en uso por usuarios reales.
-- Cómo verlo: se planea una demo con datos de prueba y un usuario con acceso para el portafolio. Aún no está disponible.
+- Cómo verlo: hay una demo pública con datos ficticios, enlazada desde la tarjeta de Gedocs en la sección Proyectos del portafolio. Los datos se reinician cada día a las 3:00 a. m. (hora de Colombia). No hace falta registrarse ni usar credenciales: en la pantalla de inicio, en «Entrar sin registrarte», el visitante elige uno de cuatro roles (Administrador, Supervisor, Auxiliar o Dependencia). La interfaz de la demo está en español.
 
 ### Proyecto 2: Plataforma de inteligencia competitiva para un ecosistema tecnológico
 - Periodo: abril de 2026 a junio de 2026.
