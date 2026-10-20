@@ -57,7 +57,18 @@ export const es = {
       'Está en producción en el entorno privado de la empresa. Puedo explicar la arquitectura y mis decisiones en una entrevista.',
     ndaNote:
       'El trabajo está cubierto por un acuerdo de confidencialidad. Puedo explicar la arquitectura y mis decisiones en una entrevista.',
-    demoPending: 'Demo con datos de prueba en preparación',
+    demo: 'Demo',
+    demoIntro:
+      'Demo pública con datos ficticios, que se reinician cada día a las 3:00 a. m. (hora de Colombia). No hace falta registrarse: en la pantalla de inicio elige un rol en «Entrar sin registrarte». La interfaz está en español.',
+    demoLink: 'Abrir la demo de Gedocs',
+    zoom: (alt: string) => `Ampliar imagen: ${alt}`,
+    lightbox: {
+      label: 'Vista ampliada de la imagen',
+      close: 'Cerrar la vista ampliada',
+      previous: 'Imagen anterior',
+      next: 'Imagen siguiente',
+      count: (n: number, total: number) => `${n} de ${total}`,
+    },
     ask: 'Pregúntale al asistente sobre este proyecto',
   },
   experience: {

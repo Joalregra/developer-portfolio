@@ -140,6 +140,13 @@ export const ExternalIcon = (p: IconProps) => (
   </Stroke>
 )
 
+export const ZoomIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5M11 8v6M8 11h6" />
+  </Stroke>
+)
+
 export const ChevronIcon = (p: IconProps) => (
   <Stroke {...p}>
     <path d="m6 9 6 6 6-6" />
