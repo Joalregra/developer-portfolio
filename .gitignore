@@ -7,6 +7,9 @@ venv/
 dist/
 build/
 coverage/
+playwright-report/
+test-results/
+.lighthouseci/
 __pycache__/
 *.py[cod]
 .pytest_cache/
