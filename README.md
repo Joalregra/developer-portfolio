@@ -145,9 +145,10 @@ It measures what can be observed (the canary or a foreign link in an answer, an 
 ## Tests and quality
 ```bash
 cd frontend && npm run format:check && npm run lint && npm test && npm run build
+cd frontend && npm run test:layout && npm run lighthouse   # on the build; need a browser, see frontend/README.md
 cd backend && ruff check . && ruff format --check . && mypy app tests evals && pytest
 ```
-GitHub Actions runs the same on every push to `main` and on every pull request.
+GitHub Actions runs the same on every push to `main` and on every pull request, plus the layout checks and Lighthouse on the production build.
 
 ## Roadmap
 - [x] Project structure, CI and base configuration
@@ -157,7 +158,7 @@ GitHub Actions runs the same on every push to `main` and on every pull request.
 - [x] Anonymous log in PostgreSQL with 90-day retention
 - [x] Evaluation set for the assistant
 - [ ] Deployment with custom domain (production compose file, Caddy, cron for the retention job)
-- [ ] Demo of the Gedocs project with test data
+- [x] Demo of the Gedocs project with test data
 
 ## Author
 **Johan Alexis Rendon Granada** · [LinkedIn](https://www.linkedin.com/in/johan-rendon-granada-14b8a82bb) · [GitHub](https://github.com/Joalregra) · johanalexis808@gmail.com

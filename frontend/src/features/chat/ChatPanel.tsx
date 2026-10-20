@@ -43,9 +43,9 @@ export default function ChatPanel() {
       aria-modal={isPhone}
       aria-labelledby="chat-title"
       data-print="hide"
-      className="chat-panel fixed inset-0 z-50 flex flex-col bg-paper sm:inset-auto sm:right-6 sm:bottom-24 sm:h-[min(70vh,40rem)] sm:w-[25rem] sm:rounded-lg sm:border sm:border-line-strong sm:shadow-panel"
+      className="chat-panel fixed inset-0 z-50 flex flex-col overflow-hidden bg-paper sm:inset-auto sm:right-6 sm:bottom-24 sm:h-[min(42rem,calc(100dvh-7.5rem))] sm:w-[25rem] sm:rounded-lg sm:border sm:border-line-strong sm:shadow-panel"
     >
-      <header className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
+      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-line px-4 py-1">
         <h2 id="chat-title" className="heading text-lg whitespace-nowrap">
           {t.chat.title}
         </h2>
@@ -70,11 +70,8 @@ export default function ChatPanel() {
           </button>
         </div>
       </header>
-      <p className="border-b border-line bg-surface px-4 py-2 text-sm text-ink-muted">
-        {t.chat.notice}
-      </p>
       <MessageList />
-      <QuickQuestions />
+      {chat.messages.length > 0 && <QuickQuestions />}
       <Composer inputRef={inputRef} />
     </div>
   )

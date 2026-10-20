@@ -2,7 +2,10 @@ import { useLocale } from '../../hooks/useLocale'
 import { toQuickQuestionId } from '../../services/api'
 import { useChatContext } from './ChatContext'
 
-/** Chips from section 9 of the knowledge file. Open at the start, collapsible afterwards. */
+/**
+ * Chips from section 9 of the knowledge file. At the start they are part of the welcome, inside
+ * the scrolling area. Once the conversation runs they collapse above the composer.
+ */
 export function QuickQuestions() {
   const { t } = useLocale()
   const { chat } = useChatContext()
@@ -31,7 +34,7 @@ export function QuickQuestions() {
 
   if (!started) {
     return (
-      <div className="px-4 pb-3">
+      <div>
         <p className="mb-2 text-sm text-ink-muted">{t.chat.quickLabel}</p>
         {chips}
       </div>
@@ -39,11 +42,11 @@ export function QuickQuestions() {
   }
 
   return (
-    <details className="px-4 pb-3">
+    <details className="shrink-0 border-t border-line px-4">
       <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium text-ink-muted hover:text-accent">
         {t.chat.quickLabel}
       </summary>
-      <div className="pt-1">{chips}</div>
+      <div className="max-h-40 overflow-y-auto pb-3">{chips}</div>
     </details>
   )
 }

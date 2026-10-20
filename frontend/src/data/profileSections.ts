@@ -1,5 +1,16 @@
-import type { Localized } from './profile'
+import type { Locale, Localized } from './profile'
 import type { ProjectId } from './projects'
+
+/** A signed letter from a third party. The quote is verbatim, translated only for the other language. */
+export interface Recommendation {
+  author: string
+  authorRole: Localized
+  quote: Localized
+  /** Language the letter was written in. The note "original letter in English" shows in the other one. */
+  originalLocale: Locale
+  /** Full letter in /public. Without it the quote is shown with no link. */
+  pdf?: { href: string; kb: number }
+}
 
 export interface ExperienceEntry {
   id: string
@@ -9,6 +20,7 @@ export interface ExperienceEntry {
   period: { start: string; end: string }
   bullets: Localized<string[]>
   projectIds: ProjectId[]
+  reference?: Recommendation
 }
 
 export const experience: ExperienceEntry[] = [
@@ -31,6 +43,18 @@ export const experience: ExperienceEntry[] = [
       ],
     },
     projectIds: ['reports', 'intel'],
+    // Letter of October 2026. It names no client, product or code, so it does not break the NDA.
+    reference: {
+      author: 'Pablo Lecea',
+      authorRole: { es: 'Games Director en Globant', en: 'Games Director, Globant' },
+      quote: {
+        es: 'Johan demostró una notable competencia técnica en arquitectura full stack, con capacidades especialmente sólidas en Python y en la implementación práctica de soluciones de IA con generación aumentada por recuperación (RAG). [...] Recomiendo a Johan Alexis Rendon Granada sin reservas para puestos técnicos.',
+        en: 'Johan demonstrated notable technical proficiency in full-stack architecture, with particularly strong capabilities in Python and the practical implementation of Retrieval-Augmented Generation (RAG) AI solutions. [...] I recommend Johan Alexis Rendon Granada without reservation for technical roles.',
+      },
+      originalLocale: 'en',
+      // The signed PDF is kept out of /public on purpose (it holds the author's contact details).
+      // To publish it, put it in public/letters/ and add: pdf: { href: '/letters/....pdf', kb: 73 }
+    },
   },
   {
     id: 'sena',
@@ -151,7 +175,7 @@ export const certifications: Certification[] = [
     issuer: 'Anthropic',
     date: null,
     verifyUrl: 'https://academy.claude.com/verify/71f83beb90b7405c3d910d2a41ab38ef',
-    pdf: { href: '/certs/anthropic-ai-fluency-framework-foundations.pdf', kb: 146 },
+    pdf: { href: '/certs/anthropic-ai-fluency-framework-foundations.pdf', kb: 204 },
   },
   {
     id: 'globant-ai-fluency-score',

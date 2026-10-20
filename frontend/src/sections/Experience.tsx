@@ -1,5 +1,7 @@
+import { PdfLink } from '../components/ui/PdfLink'
 import { RichText } from '../components/ui/RichText'
 import { Section } from '../components/ui/Section'
+import { profile } from '../data/profile'
 import { experience } from '../data/profileSections'
 import { projects } from '../data/projects'
 import { useLocale } from '../hooks/useLocale'
@@ -46,6 +48,37 @@ export function Experience() {
                   ) : null
                 })}
               </p>
+              {entry.reference && (
+                <figure
+                  aria-label={t.experience.letterLabel}
+                  className="measure mt-6 border-l-2 border-accent pl-5"
+                >
+                  <blockquote cite={entry.reference.pdf?.href} className="heading text-lg">
+                    <p>{`“${entry.reference.quote[locale]}”`}</p>
+                  </blockquote>
+                  <figcaption className="mt-3 text-ink-muted">
+                    {entry.reference.author}, {entry.reference.authorRole[locale]}.
+                    {locale !== entry.reference.originalLocale &&
+                      ` ${t.experience.letterOriginal}.`}
+                  </figcaption>
+                  {entry.reference.pdf ? (
+                    <PdfLink href={entry.reference.pdf.href} kb={entry.reference.pdf.kb}>
+                      {t.experience.letterLink}
+                    </PdfLink>
+                  ) : (
+                    <p className="mt-2">
+                      {t.experience.letterConfirm}{' '}
+                      <a
+                        href={`mailto:${profile.email}`}
+                        className="font-semibold text-accent underline underline-offset-4"
+                      >
+                        {profile.email}
+                      </a>
+                      .
+                    </p>
+                  )}
+                </figure>
+              )}
             </div>
           </li>
         ))}
