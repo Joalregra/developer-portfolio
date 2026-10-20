@@ -8,6 +8,21 @@ export type ProjectId = 'reports' | 'intel' | 'gedocs'
  */
 export type ProjectStatus = 'production' | 'nda'
 
+export interface ProjectScreenshot {
+  /** Path under `public/`, served as is. */
+  src: string
+  width: number
+  height: number
+  alt: Localized
+  caption: Localized
+}
+
+/** Public demo with fictitious data. Only Gedocs has one. */
+export interface ProjectDemo {
+  url: string
+  screenshots: ProjectScreenshot[]
+}
+
 export interface Project {
   id: ProjectId
   name: Localized
@@ -21,8 +36,7 @@ export interface Project {
   status: ProjectStatus
   /** Only the reports platform is stated to run in production in the company's private environment. */
   runsInPrivateProduction: boolean
-  /** True while the public demo with test data does not exist yet. */
-  demoPending: boolean
+  demo?: ProjectDemo
   problem: Localized
   /** Strings may wrap figures in **double asterisks** to render them in bold. */
   did: Localized<string[]>
@@ -57,7 +71,6 @@ export const projects: Project[] = [
     team: 3,
     status: 'nda',
     runsInPrivateProduction: true,
-    demoPending: false,
     problem: {
       es: 'Reunir datos de catálogos externos, búsqueda web y modelos de lenguaje en reportes estructurados de producto, y poder buscar dentro de ellos viendo de dónde sale cada fragmento.',
       en: 'Bring data from external catalogs, web search and language models into structured product reports, and search inside them while seeing where each fragment comes from.',
@@ -126,7 +139,6 @@ export const projects: Project[] = [
     team: 3,
     status: 'nda',
     runsInPrivateProduction: false,
-    demoPending: false,
     problem: {
       es: 'Convertir publicaciones sueltas de foros y comunidades en métricas que un equipo pueda consultar: sentimiento, riesgo de abandono (churn), NPS y alertas.',
       en: 'Turn loose posts from forums and communities into metrics a team can query: sentiment, churn risk, NPS and alerts.',
@@ -203,7 +215,63 @@ export const projects: Project[] = [
     team: 9,
     status: 'production',
     runsInPrivateProduction: false,
-    demoPending: true,
+    demo: {
+      url: 'https://gedocs.johanrendon.com/',
+      screenshots: [
+        {
+          src: '/img/gedocs/login.webp',
+          width: 1440,
+          height: 900,
+          alt: {
+            es: 'Pantalla de inicio de sesión de Gedocs, con cuatro botones para entrar sin registro según el rol.',
+            en: 'Gedocs login screen, with four buttons to sign in without registering, by role.',
+          },
+          caption: {
+            es: 'Entrada sin registro: eliges un rol y recorres el sistema.',
+            en: 'Sign-in without registering: pick a role and explore the system.',
+          },
+        },
+        {
+          src: '/img/gedocs/inbox.webp',
+          width: 1440,
+          height: 900,
+          alt: {
+            es: 'Bandeja de entrada de PQRSD con filtros por tipo, el detalle del solicitante y el campo para responder.',
+            en: 'PQRSD inbox with filters by type, the requester details and the reply field.',
+          },
+          caption: {
+            es: 'Bandeja de PQRSD: filtros por tipo, fecha límite y respuesta.',
+            en: 'PQRSD inbox: filters by type, deadline and reply.',
+          },
+        },
+        {
+          src: '/img/gedocs/explorer.webp',
+          width: 1440,
+          height: 900,
+          alt: {
+            es: 'Explorador de archivo documental, con las entidades a la izquierda y las dependencias de la entidad elegida como carpetas.',
+            en: 'Document archive explorer, with the entities on the left and the departments of the chosen entity as folders.',
+          },
+          caption: {
+            es: 'Archivo documental por entidad y dependencia, como un drive.',
+            en: 'Document archive by entity and department, like a drive.',
+          },
+        },
+        {
+          src: '/img/gedocs/pdf-generator.webp',
+          width: 1440,
+          height: 900,
+          alt: {
+            es: 'Generador de oficios en PDF, con una carta que tiene campos para el destinatario, el asunto y el cuerpo.',
+            en: 'PDF letter generator, with a letter that has fields for the recipient, subject and body.',
+          },
+          caption: {
+            es: 'Generador de oficios: llenas la carta y se exporta a PDF.',
+            en: 'Letter generator: fill in the letter and export it to PDF.',
+          },
+        },
+      ],
+    },
     problem: {
       es: 'El área de gestión documental del SENA necesitaba archivar documentos como en un drive y gestionar PQRSD (peticiones, quejas, reclamos, sugerencias y denuncias), conforme a la Ley General de Archivos de Colombia.',
       en: 'The document management area of SENA needed to archive documents like in a drive and manage PQRSD (petitions, complaints, claims, suggestions and reports), following the Colombian General Archives Law.',
