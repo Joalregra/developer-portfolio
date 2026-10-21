@@ -10,6 +10,7 @@ coverage/
 playwright-report/
 test-results/
 .lighthouseci/
+.wrangler/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -21,6 +22,7 @@ __pycache__/
 .env
 .env.*
 !.env.example
+!.env.*.example
 
 # Editors and OS
 .vscode/*

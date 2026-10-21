@@ -1,0 +1,37 @@
+{
+	# Contact address for Let's Encrypt expiry notices.
+	email {$ACME_EMAIL}
+}
+
+# The API sends JSON only: nothing in it should ever be rendered, framed or sniffed.
+(api_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
+		-Server
+	}
+}
+
+{$API_DOMAIN} {
+	import api_headers
+	encode zstd gzip
+	# A chat message is a few KB. Anything bigger is cut here, before it reaches the API.
+	request_body {
+		max_size 64KB
+	}
+	reverse_proxy portfolio-api:8000
+}
+
+# Gedocs keeps its own security headers (set by the Caddy inside its container) and its own
+# compression. No HSTS here: that project decided not to use it.
+{$GEDOCS_DOMAIN} {
+	header -Server
+	reverse_proxy gedocs-app:80
+}
+
+# No "trusted_proxies" anywhere: Caddy ignores any X-Forwarded-For sent by a visitor and writes
+# the address of the real connection. That is what stops a visitor from faking an address to get
+# around the rate limit. If the API host is ever proxied by Cloudflare (orange cloud), trust only
+# Cloudflare's published ranges and write it down in docs/deploy.md.

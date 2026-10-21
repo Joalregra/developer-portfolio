@@ -1,6 +1,0 @@
-# Reverse proxy for the backend VM (automatic HTTPS with Let's Encrypt).
-# API_DOMAIN is read from the environment, e.g. api.yourdomain.dev
-{$API_DOMAIN} {
-	encode gzip
-	reverse_proxy backend:8000
-}

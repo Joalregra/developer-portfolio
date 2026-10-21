@@ -1,0 +1,76 @@
+# Portfolio API in production. It publishes no port: it is reachable only through the shared Caddy
+# (deploy/proxy), over the external "web" network. See docs/deploy.md.
+#
+#   cp .env.example .env                       # then edit the values
+#   cp .env.retention.example .env.retention   # then edit the value
+#   docker compose pull && docker compose up -d
+#
+# Image: built by .github/workflows/deploy-api.yml and published to GHCR. The server never builds.
+services:
+  api:
+    image: ${API_IMAGE:?Set API_IMAGE in .env}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # SEC-03: uvicorn trusts X-Forwarded-For only from this address, the shared Caddy's fixed
+      # address on the "web" network. Any other sender cannot fake a visitor's address.
+      FORWARDED_ALLOW_IPS: 172.30.0.10
+    # The command is the one in backend/Dockerfile: a single uvicorn process on port 8000. It must
+    # stay a single process (ARQ-06): the rate limit, the daily budget and the answer cache live in
+    # memory, so a second worker would split them.
+    expose:
+      - "8000"
+    networks:
+      web:
+        aliases:
+          - portfolio-api
+    healthcheck:
+      # /health reads only settings and the loaded knowledge: it never calls a model or the database.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    # The app writes nothing to disk: logs go to stdout and every counter is in memory.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # Lets a chat that is already running (up to 25 s) finish before a deploy replaces the container.
+    stop_grace_period: 45s
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+
+  # Deletes chat log rows older than CHAT_LOG_RETENTION_DAYS. Not started with the API: cron runs
+  #   docker compose --profile jobs run --rm retention
+  # It has its own database user (SELECT and DELETE only) and none of the API's keys.
+  retention:
+    image: ${API_IMAGE:?Set API_IMAGE in .env}
+    profiles:
+      - jobs
+    env_file: .env.retention
+    command: ["python", "-m", "app.jobs.purge_chat_log"]
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  web:
+    external: true

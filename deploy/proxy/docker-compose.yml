@@ -1,0 +1,43 @@
+# Shared reverse proxy: the only service that publishes ports 80 and 443 on the host.
+# It terminates HTTPS for the portfolio API and for the Gedocs demo. See docs/deploy.md.
+#
+#   cp .env.example .env     # then edit the values
+#   docker compose up -d
+#
+# The "web" network is created once by hand with a fixed subnet, so that the API can trust the
+# X-Forwarded-For header only from this container's address (SEC-03):
+#
+#   docker network create --subnet 172.30.0.0/24 web
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    env_file: .env
+    volumes:
+      # Mount the directory, not the single file: "git pull" replaces the file (new inode), and a
+      # single-file bind mount would keep serving the old one.
+      - ./caddy:/etc/caddy:ro
+      # Certificates: keep them across restarts to stay far from Let's Encrypt rate limits.
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      web:
+        ipv4_address: 172.30.0.10
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  web:
+    external: true
