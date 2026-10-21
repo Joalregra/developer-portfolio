@@ -27,7 +27,7 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -48,7 +48,7 @@ jobs:
     outputs:
       image: ${{ steps.name.outputs.image }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # GHCR names must be lowercase, and the owner may not be.
       - id: name
         run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/portfolio-api" >> "$GITHUB_OUTPUT"
