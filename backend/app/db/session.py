@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 # is best effort and runs after the answer, so waiting this long never delays a visitor.
 POSTGRES_CONNECT_TIMEOUT_SECONDS = 10
 POOL_TIMEOUT_SECONDS = 5
+POOL_SIZE = 3
+POOL_MAX_OVERFLOW = 2
+POOL_RECYCLE_SECONDS = 300
 
 
 def create_engine(database_url: str) -> AsyncEngine:
@@ -28,8 +31,17 @@ def create_engine(database_url: str) -> AsyncEngine:
     the visitor's question, which must never reach the logs (brief, section 9.6).
     """
     connect_args: dict[str, Any] = {}
+    pool_options: dict[str, Any] = {}
     if make_url(database_url).get_backend_name() == "postgresql":
         connect_args["connect_timeout"] = POSTGRES_CONNECT_TIMEOUT_SECONDS
+        # One uvicorn process writes one small row per answer: a few connections are plenty.
+        # Neon closes idle connections when it suspends the compute (about 5 minutes without
+        # traffic), so connections older than that are replaced instead of reused.
+        pool_options = {
+            "pool_size": POOL_SIZE,
+            "max_overflow": POOL_MAX_OVERFLOW,
+            "pool_recycle": POOL_RECYCLE_SECONDS,
+        }
     return create_async_engine(
         database_url,
         pool_pre_ping=True,
@@ -38,6 +50,7 @@ def create_engine(database_url: str) -> AsyncEngine:
         # instead of queueing behind a database that does not answer.
         pool_timeout=POOL_TIMEOUT_SECONDS,
         connect_args=connect_args,
+        **pool_options,
     )
 
 

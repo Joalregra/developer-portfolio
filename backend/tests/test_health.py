@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from app.core.config import Settings
+from app.main import create_app
 
 
 def test_health_returns_ok(client: TestClient) -> None:
@@ -59,3 +60,19 @@ def test_production_accepts_explicit_https_origins() -> None:
     )
 
     assert settings.is_production
+
+
+@pytest.mark.parametrize("path", ["/docs", "/redoc", "/openapi.json"])
+def test_the_api_docs_are_closed_in_production_and_open_elsewhere(path: str) -> None:
+    development = Settings(_env_file=None, environment="development", chat_enabled=False)
+    production = Settings(
+        _env_file=None,
+        environment="production",
+        chat_enabled=False,
+        cors_origins=["https://yourdomain.com"],
+    )
+
+    assert TestClient(create_app(development)).get(path).status_code == 200
+    assert TestClient(create_app(production)).get(path).status_code == 404
+    # The health check is the one route production keeps public besides the chat endpoints.
+    assert TestClient(create_app(production)).get("/health").status_code == 200
