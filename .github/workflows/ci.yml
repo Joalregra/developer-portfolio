@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The jobs only read the repository, so the token gets no other scope.
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  # Runs the production build in a real browser: layout checks at 320 to 1440 px and Lighthouse.
+  frontend-browser:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:layout
+      # Chrome comes preinstalled on the runner. Scores and budgets are in lighthouserc.json.
+      - run: npm run lighthouse
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: frontend-browser-reports
+          path: |
+            frontend/test-results
+            frontend/.lighthouseci
+          if-no-files-found: ignore
+
+  # The deploy files cannot be run in CI (they need a server), but they can be validated: a broken
+  # compose file or Caddyfile would otherwise only show on the server, during a deploy.
+  deploy-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compose files are valid
+        run: |
+          cp deploy/proxy/.env.example deploy/proxy/.env
+          cp deploy/api/.env.example deploy/api/.env
+          cp deploy/api/.env.retention.example deploy/api/.env.retention
+          docker compose -f deploy/proxy/docker-compose.yml config --quiet
+          docker compose -f deploy/api/docker-compose.yml config --quiet
+          docker compose -f deploy/api/docker-compose.yml --profile jobs config --quiet
+      - name: Caddyfile is valid
+        run: |
+          docker run --rm \
+            -v "$PWD/deploy/proxy/caddy:/etc/caddy:ro" \
+            -e ACME_EMAIL=you@example.com \
+            -e API_DOMAIN=api.example.com \
+            -e GEDOCS_DOMAIN=gedocs.example.com \
+            caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile
+
+      - name: deploy.sh is valid and executable
+        run: |
+          bash -n deploy/scripts/deploy.sh
+          test -x deploy/scripts/deploy.sh
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: mypy app tests evals
+      - run: pytest

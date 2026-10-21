@@ -1,0 +1,36 @@
+[project]
+name = "portfolio-backend"
+version = "0.1.0"
+description = "FastAPI backend for Johan Rendon's portfolio and its AI assistant"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Migrations are written by hand and reviewed as SQL, so they are not reformatted.
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W", "F", "I", "N", "UP", "B", "SIM", "C4", "RET", "ARG",
+  "S", "PTH", "ASYNC", "LOG", "FAST", "TID", "RUF",
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "ARG"]
+# This test feeds look-alike characters on purpose, to prove normalization turns them back.
+"tests/test_guard.py" = ["RUF001"]
+"tests/test_output_validator.py" = ["RUF001"]
+"alembic/env.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

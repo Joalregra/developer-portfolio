@@ -1,0 +1,12 @@
+fastapi==0.143.2
+# Pinned directly: FastAPI does not cap Starlette, and 1.x changed the TestClient to httpx2.
+starlette==1.8.0
+uvicorn[standard]==0.54.0
+pydantic-settings==2.16.0
+sqlalchemy[asyncio]==2.1.4
+psycopg[binary]==3.3.6
+alembic==1.20.0
+# Imported directly (network errors from the Gemini SDK); groq and google-genai need it too.
+httpx==0.28.1
+groq==1.7.0
+google-genai==2.31.0
