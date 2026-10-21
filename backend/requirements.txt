@@ -1,6 +1,6 @@
 fastapi==0.143.2
 # Pinned directly: FastAPI does not cap Starlette, and 1.x changed the TestClient to httpx2.
-starlette==1.8.0
+starlette==1.9.0
 uvicorn[standard]==0.54.0
 pydantic-settings==2.16.0
 sqlalchemy[asyncio]==2.1.4
