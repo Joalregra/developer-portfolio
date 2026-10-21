@@ -14,9 +14,9 @@ from sqlalchemy.ext.asyncio import (
 
 logger = logging.getLogger(__name__)
 
-# Neon can sleep when idle and take a few seconds to wake. Logging is best effort and runs
-# after the answer, so waiting this long never delays a visitor.
-POSTGRES_CONNECT_TIMEOUT_SECONDS = 5
+# Neon sleeps when idle and takes several seconds to wake (6.2 s measured on 2026-10-20). Logging
+# is best effort and runs after the answer, so waiting this long never delays a visitor.
+POSTGRES_CONNECT_TIMEOUT_SECONDS = 10
 POOL_TIMEOUT_SECONDS = 5
 
 
