@@ -1,0 +1,20 @@
+{
+  // Cloudflare Workers with static assets only: there is no script ("main"), so no visit runs code
+  // and static requests are free and unlimited. Cloudflare Workers Builds runs `npm run build` and
+  // then `npx wrangler deploy` on every push to the production branch (see docs/deploy.md).
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // The name must match the project name in the Cloudflare dashboard.
+  "name": "portfolio-frontend",
+  // Pins the Workers runtime behaviour. It is the newest date the pinned wrangler's local runtime
+  // supports (a newer date makes `wrangler dev` refuse to start). Move it only on purpose, when
+  // upgrading wrangler.
+  "compatibility_date": "2026-10-13",
+  "assets": {
+    "directory": "./dist",
+    // There is no client-side router: "/", "/es/" and "/en/" are real pages. An unknown path gets
+    // dist/404.html with a 404 status, which is what a crawler or a mistyped link should see.
+    "not_found_handling": "404-page",
+  },
+  // Custom domains are added in the dashboard (Settings, Domains and Routes), not here, so the
+  // repository never carries the real domain.
+}
