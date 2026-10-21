@@ -15,7 +15,9 @@ flowchart TD
   K -- no --> C[Clean the text<br/>mask emails and phone numbers<br/>drop the browser's assistant turns]
   C --> H{Known attack phrase?}
   H -- yes --> X[200 refused + strike for the visitor]
-  H -- no --> G{Prompt Guard 2 score}
+  H -- no --> AC{Same question already answered?<br/>no history, same language}
+  AC -- yes --> CA[200 stored answer<br/>no model, no budget]
+  AC -- no --> G{Prompt Guard 2 score}
   G -- attack --> X2[200 refused]
   G -- ok or unavailable --> B{Daily budget left?}
   B -- no --> P
@@ -24,6 +26,7 @@ flowchart TD
   V -- off topic or leak --> X3[200 refused, fixed text]
   V -- ok --> A[200 answer + section]
   QA --> LOG[(Log row, written after the answer)]
+  CA --> LOG
   X --> LOG
   X2 --> LOG
   X3 --> LOG
@@ -39,6 +42,7 @@ A refusal is still HTTP 200 with `refused: true`. The text of a refusal is writt
 | Rate limit, strikes, daily budget | Abuse, and burning the free quota. A visitor is an IPv4 address or an IPv6 /56 block: 10 questions a minute and 30 a day | `services/rate_limit.py`, `services/budget.py` |
 | Cleaning | Invisible and blank filler characters, look-alike letters, personal data going to a provider | `services/guard.py` |
 | Phrase list | Known injection phrases in Spanish and English, encoded blocks, scrambled words, Cyrillic or Greek look-alikes, phrases hidden by spaces or fillers | `services/guard_patterns.py` |
+| Answer cache | Calling a model twice for the same question. It keeps only answers the output validator accepted, for questions asked without history, for a day (`ANSWER_CACHE_TTL_SECONDS`) and up to 500 entries. It is checked after the phrase list, so an attack is still refused, and before Prompt Guard, because a stored question already passed it. It lives in the process, so a restart empties it | `services/answer_cache.py` |
 | Prompt Guard 2 | Attacks the list does not know. Long messages go in overlapping pieces of 450 characters, and one bad piece blocks | `services/llm/groq_provider.py` |
 | Prompt structure | The visitor's text never enters the system message and cannot close a tag. Only the visitor's earlier questions are sent: the browser also sends the assistant's earlier answers, but it could have invented them, so they never reach the model | `services/prompt.py` |
 | Output validator | A leaked prompt or key (checked before and after removing markup, ignoring case and spacing for the canary), links to other sites, HTML, off-topic answers | `services/output_validator.py` |
@@ -74,8 +78,9 @@ Only one call to Groq runs at a time, and the lock is never held while waiting. 
 Measured on 2026-10-15 with the real prompt (about 5,100 tokens):
 
 - The limit is 8,000 tokens per minute, so **one uncached question fits per minute**. A second one gets a 429 with `retry-after` of 13 to 16 s.
-- Groq's prompt cache is best effort. Cached tokens do not count toward the limit, but in tests it almost never hit, so every question is charged the whole prompt.
-- The daily limit is 200,000 tokens, which is about 39 questions a day at this size.
+- Groq's prompt cache is best effort and works only some of the time. Cached tokens do not count toward the limit. Measured on 2026-10-20 and 21 with the same prompt: 2 of 14 real calls reported cached tokens, both 2,304 of about 5,200 (the rules and the first sections, in blocks of 256), and the rest reported none, even for identical questions a minute apart. Groq answered from two regions (`dls` and `yul`) in the same hour, which fits a cache kept per node. We cannot steer it: the system message is already byte for byte the same on every call, with the fixed text first. Do not plan the quota around it.
+- The daily limit is 200,000 tokens, which is about 39 uncached questions a day at this size. Groq confirmed it on 2026-10-21: `tokens per day (TPD): Limit 200000, Used 195561, Requested 5543. Please try again in 7m56s`. The wait was minutes, not hours, so it looks like a rolling window rather than a reset at midnight. Cached tokens do not count, which is why a long run can fit more questions than that (48 questions on 2026-10-20 fitted), but it cannot be counted on. When it is spent the router moves to Gemini for visitors who may use it, and the evaluation set (`--country CO`) then mixes in Gemini answers: for a run that must measure Groq, use `--country none`.
+- A repeated question does not reach Groq at all: the answer cache (`services/answer_cache.py`) serves it from memory, in a few milliseconds, with no tokens and no budget. It only helps with exact repeats of questions asked without history, such as the ones suggested in the chat. Free text rarely repeats, so it is a small saving, not a fix for the quota.
 - Quick-question buttons cost nothing: they never reach a model.
 - Model calls are counted against `DAILY_LLM_BUDGET` (300), but Groq's own daily limit trips first, so the budget mostly protects the Gemini quota and stops one person from spending everything.
 
@@ -91,6 +96,7 @@ All of these are fields in the JSON logs on stdout.
 |---|---|
 | "Always unavailable" | `provider_failed` and `fallback_ineligible` |
 | Slow answers | `chat_completed` with a high `latency_ms`, and `cache_cold: true` |
+| Is the answer cache working? | `chat_completed` with `status: answered_cached` (no `prompt_tokens`, `latency_ms` near 0) |
 | Refusing normal questions | `chat_completed` with `status` `refused_off_topic` or `refused_injection` |
 | Paused for the day | `budget_used` |
 | One office blocked | `ip_blocked` (restart the process to clear it) |
