@@ -5,6 +5,7 @@ import json
 from types import SimpleNamespace
 from typing import Any, cast
 
+import httpx
 import pytest
 from google import genai
 from google.genai import errors
@@ -116,3 +117,20 @@ async def test_a_call_that_takes_too_long_is_unavailable() -> None:
 
     with pytest.raises(ProviderUnavailableError, match="timeout"):
         await provider(fake).complete("s", "u", 0.05)
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        httpx.RemoteProtocolError("Server disconnected without sending a response."),
+        httpx.ConnectError("connection refused"),
+        httpx.ReadError("connection reset"),
+    ],
+)
+async def test_a_network_failure_is_unavailable_and_never_a_crash(error: Exception) -> None:
+    # The SDK lets these httpx errors through; without a translation the visitor would get a 500.
+    with pytest.raises(ProviderUnavailableError) as raised:
+        await provider(FakeGemini(error)).complete("system text", "user text", 15)
+
+    assert str(raised.value) == type(error).__name__
+    assert "disconnected" not in str(raised.value)
