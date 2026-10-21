@@ -75,6 +75,20 @@ async def test_quick_answer_without_a_model_is_valid(
     assert await record_chat_message(session_factory, entry) == entry.id
 
 
+async def test_a_cached_answer_without_a_model_is_valid(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    entry = make_entry(
+        status=ChatStatus.ANSWERED_CACHED,
+        provider=LlmProvider.NONE,
+        prompt_tokens=None,
+        completion_tokens=None,
+        cached_tokens=None,
+    )
+
+    assert await record_chat_message(session_factory, entry) == entry.id
+
+
 @pytest.mark.parametrize(
     "changes",
     [
@@ -86,6 +100,21 @@ async def test_quick_answer_without_a_model_is_valid(
         pytest.param(
             {"status": ChatStatus.ANSWERED_QUICK, "provider": LlmProvider.GROQ},
             id="quick-answer-with-a-model",
+        ),
+        pytest.param(
+            {"status": ChatStatus.ANSWERED_CACHED, "provider": LlmProvider.GROQ},
+            id="cached-answer-with-a-model",
+        ),
+        pytest.param(
+            {
+                "status": ChatStatus.ANSWERED_CACHED,
+                "provider": LlmProvider.NONE,
+                "answer": None,
+                "prompt_tokens": None,
+                "completion_tokens": None,
+                "cached_tokens": None,
+            },
+            id="cached-answer-without-an-answer",
         ),
         pytest.param(
             {"status": ChatStatus.REFUSED_OFF_TOPIC, "provider": LlmProvider.NONE},

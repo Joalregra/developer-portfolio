@@ -1,8 +1,9 @@
 """The whole life of one chat question, from the limits to the logged answer.
 
 Every layer of defence is called from here, in a fixed order (backend brief, section 9):
-switch, rate limit, quick answer, cleaning, heuristics, classifier, budget, model, output
-validation. Routes call this and nothing else. It raises domain errors and never imports FastAPI.
+switch, rate limit, quick answer, cleaning, heuristics, answer cache, classifier, budget, model,
+output validation. Routes call this and nothing else. It raises domain errors and never
+imports FastAPI.
 """
 
 import asyncio
@@ -24,6 +25,7 @@ from app.core.logging import request_id_var
 from app.db.repositories import ChatLogEntry
 from app.models.chat import ChatStatus, LlmProvider
 from app.schemas.chat import ChatRequest, ChatResponse, ChatSection, ChatTurn, QuickQuestionId
+from app.services.answer_cache import AnswerCache, CachedAnswer
 from app.services.budget import BudgetExhaustedError
 from app.services.chat_log_writer import ChatLogWriter
 from app.services.guard import PromptGuard, detect_injection, mask_personal_data, normalize
@@ -62,6 +64,7 @@ class ChatService:
         validator: OutputValidator,
         rate_limiter: RateLimiter,
         writer: ChatLogWriter,
+        answer_cache: AnswerCache,
         request_timeout_seconds: float,
     ) -> None:
         self.enabled = enabled
@@ -72,6 +75,7 @@ class ChatService:
         self.validator = validator
         self.rate_limiter = rate_limiter
         self.writer = writer
+        self.answer_cache = answer_cache
         self.request_timeout = request_timeout_seconds
 
     async def answer(
@@ -98,6 +102,8 @@ class ChatService:
         history = [_clean_turn(turn) for turn in request.history if turn.role == "user"]
         if (refusal := self._screen_locally(exchange, history, client_key)) is not None:
             return refusal
+        if (cached := self._from_cache(exchange)) is not None:
+            return cached
         deadline = Deadline(self.request_timeout)
         if (refusal := await self._screen_with_classifier(exchange)) is not None:
             return refusal
@@ -137,6 +143,25 @@ class ChatService:
                 self.rate_limiter.add_strike(client_key)
                 return self._refuse(exchange, verdict.reason or "blocked")
         return None
+
+    def _from_cache(self, exchange: _Exchange) -> ChatResponse | None:
+        """Serve a repeated question without calling a model. A follow-up is never cached.
+
+        This runs after the phrase list, so an attack is still refused and still adds a strike,
+        and before the classifier: a question stored here already passed every check.
+        """
+        if exchange.request.history:
+            return None
+        hit = self.answer_cache.get(exchange.request.locale, exchange.question)
+        if hit is None:
+            return None
+        return self._finish(
+            exchange,
+            ChatStatus.ANSWERED_CACHED,
+            LlmProvider.NONE,
+            text=hit.text,
+            section=hit.section,
+        )
 
     async def _screen_with_classifier(self, exchange: _Exchange) -> ChatResponse | None:
         if self.guard is None:
@@ -194,6 +219,10 @@ class ChatService:
             status = ChatStatus.REFUSED_INJECTION
         else:
             status = ChatStatus.REFUSED_OFF_TOPIC
+        if status is ChatStatus.ANSWERED and not exchange.request.history:
+            self.answer_cache.put(
+                locale, exchange.question, CachedAnswer(validated.text, validated.section)
+            )
         return self._finish(
             exchange,
             status,

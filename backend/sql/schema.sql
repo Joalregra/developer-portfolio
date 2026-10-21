@@ -37,16 +37,18 @@ CREATE TABLE chat_messages (
   CONSTRAINT ck_chat_messages_answer_length
     CHECK (answer IS NULL OR length(answer) BETWEEN 1 AND 2000),
   CONSTRAINT ck_chat_messages_status_valid CHECK (status IN (
-    'answered', 'answered_quick', 'refused_off_topic', 'refused_injection',
+    'answered', 'answered_quick', 'answered_cached', 'refused_off_topic', 'refused_injection',
     'rate_limited', 'provider_error', 'invalid_output')),
   CONSTRAINT ck_chat_messages_provider_valid CHECK (provider IN ('groq', 'gemini', 'none')),
   -- An answered row always has its answer and the provider that produced it.
   CONSTRAINT ck_chat_messages_answered_has_answer
-    CHECK (status NOT IN ('answered', 'answered_quick') OR answer IS NOT NULL),
+    CHECK (status NOT IN ('answered', 'answered_quick', 'answered_cached') OR answer IS NOT NULL),
   CONSTRAINT ck_chat_messages_answered_by_llm
     CHECK (status <> 'answered' OR provider IN ('groq', 'gemini')),
   CONSTRAINT ck_chat_messages_quick_without_llm
     CHECK (status <> 'answered_quick' OR provider = 'none'),
+  CONSTRAINT ck_chat_messages_cached_without_llm
+    CHECK (status <> 'answered_cached' OR provider = 'none'),
   -- Off-topic refusals and invalid output both come from a model call.
   CONSTRAINT ck_chat_messages_model_result_has_provider
     CHECK (status NOT IN ('refused_off_topic', 'invalid_output') OR provider <> 'none'),

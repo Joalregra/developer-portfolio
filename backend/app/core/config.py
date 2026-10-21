@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = Field(default=10, gt=0)
     rate_limit_per_day: int = Field(default=30, gt=0)
     daily_llm_budget: int = Field(default=300, gt=0)
+    # Repeated questions are answered from memory, without a model call. 0 switches it off.
+    answer_cache_ttl_seconds: int = Field(default=86_400, ge=0)
+    answer_cache_max_entries: int = Field(default=500, gt=0, le=10_000)
 
     # Time limits for every external call (ERR-06).
     guard_timeout_seconds: float = Field(default=3.0, gt=0)
