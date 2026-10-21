@@ -1,0 +1,112 @@
+name: Deploy API
+
+# Builds the API image, publishes it to GHCR and, once the server is ready, deploys it over SSH.
+# The server never builds: updating is pulling an image. See docs/deploy.md.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "deploy/**"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+# One deploy at a time; a running one is never cancelled halfway.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+# The jobs only read the repository; the image job adds the one scope it needs.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: mypy app tests evals
+      - run: pytest
+
+  image:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.name.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      # GHCR names must be lowercase, and the owner may not be.
+      - id: name
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/portfolio-api" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.name.outputs.image }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,format=long
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend
+          platforms: linux/amd64
+          # A manual run from another branch builds the image but does not publish it.
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: image
+    # DEPLOY_ENABLED is a repository variable, created only after the cutover described in
+    # docs/deploy.md. Until then this workflow tests and publishes the image and stops here: a
+    # deploy before the shared proxy owns ports 80 and 443 would fight the Gedocs demo for them.
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      # No command is sent: the server runs deploy/scripts/deploy.sh whatever the client asks
+      # (forced command), and StrictHostKeyChecking with a pinned known_hosts refuses an impostor.
+      - name: Run the deploy script on the server
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "${DEPLOY_USER}@${DEPLOY_HOST}"
+      - name: Smoke test
+        env:
+          API_DOMAIN: ${{ vars.API_DOMAIN }}
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            curl -fsS "https://${API_DOMAIN}/health" && exit 0
+            sleep 10
+          done
+          exit 1

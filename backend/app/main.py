@@ -60,7 +60,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level)
 
-    app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
+    # The interactive docs and the schema describe every endpoint to anyone, so production turns
+    # them off. Locally they stay at /docs.
+    docs_enabled = not settings.is_production
+    app = FastAPI(
+        title=settings.app_name,
+        version="0.1.0",
+        lifespan=lifespan,
+        docs_url="/docs" if docs_enabled else None,
+        redoc_url="/redoc" if docs_enabled else None,
+        openapi_url="/openapi.json" if docs_enabled else None,
+    )
     app.state.settings = settings
     # Loaded here, not in the lifespan: a broken knowledge file stops the start at once, and
     # /health can report the version. Defaults below keep tests that skip the lifespan working.

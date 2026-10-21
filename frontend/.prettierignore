@@ -5,3 +5,4 @@ public
 playwright-report
 test-results
 .lighthouseci
+.wrangler

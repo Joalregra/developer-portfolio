@@ -4,7 +4,7 @@ Personal portfolio of **Johan Alexis Rendon Granada**, Junior Backend Developer 
 
 [![CI](https://github.com/Joalregra/developer-portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/Joalregra/developer-portfolio/actions/workflows/ci.yml)
 
-> 🚧 **Status:** in active development. The live site and screenshots will be added at launch.
+> **Status:** ready for its first production deploy. The live site and screenshots will be added at launch.
 
 ## Features
 - Bilingual single-page portfolio (Spanish and English), prerendered at `/es/` and `/en/`
@@ -17,27 +17,34 @@ Personal portfolio of **Johan Alexis Rendon Granada**, Junior Backend Developer 
 ## Stack
 | Layer | Technologies |
 |---|---|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS, Vitest, React Testing Library |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS, Vitest, React Testing Library, Playwright, Lighthouse CI |
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2, Alembic, Pydantic Settings, pytest, Ruff, mypy |
-| Data | PostgreSQL (Neon) |
+| Data | PostgreSQL (Neon, us-east-1) |
 | AI | Groq (primary), Gemini (fallback) |
-| Infrastructure | Docker, Caddy, GitHub Actions, Cloudflare Pages |
+| Infrastructure | Cloudflare Workers (static assets) for the frontend; Docker and Caddy on AWS Lightsail for the backend; GitHub Actions and GHCR |
 
 ## Architecture
 ```mermaid
 flowchart LR
-  V[Visitor] --> F[React frontend]
-  F -->|REST| B[FastAPI backend]
+  V[Visitor] --> F[React frontend<br/>Cloudflare Workers]
+  F -->|REST| B[FastAPI backend<br/>AWS Lightsail, behind Caddy]
   B --> K[(Knowledge file)]
   B --> L1[Groq]
   B -.fallback.-> L2[Gemini]
-  B --> D[(PostgreSQL)]
+  B --> D[(PostgreSQL<br/>Neon)]
 ```
 More detail in [docs/architecture.md](docs/architecture.md) and the reasoning behind each choice in [docs/decisions.md](docs/decisions.md).
 
+### Infrastructure
+- **Frontend:** static files served by Cloudflare Workers (static assets only, no script). Cloudflare builds them from this repository on every push to `main`.
+- **Backend:** a Docker container on an AWS Lightsail instance that it shares with another project, behind one Caddy that provides HTTPS and security headers. GitHub Actions tests the code, builds the image, publishes it to GHCR and triggers the deploy; the server never builds.
+- **Data and AI:** PostgreSQL on Neon (same region as the instance), Groq as the main model and Gemini as the fallback.
+
+The runbook (server setup, deploy, rollback, troubleshooting) is [docs/deploy.md](docs/deploy.md).
+
 ## Run locally
 
-**Requirements:** Node 20+, Python 3.12+ and optionally Docker.
+**Requirements:** Node 22+, Python 3.12+ and optionally Docker.
 
 ```bash
 git clone https://github.com/Joalregra/developer-portfolio.git
@@ -47,7 +54,7 @@ cd developer-portfolio
 cd backend
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-cp .env.example .env
+cp .env.example .env                                 # then set GROQ_API_KEY, GROQ_MODEL, GUARD_MODEL and CANARY_TOKEN, or CHAT_ENABLED=false
 uvicorn app.main:app --reload                        # http://localhost:8000/docs
 
 # Frontend (second terminal)
@@ -68,9 +75,9 @@ With Docker, `docker compose up` starts PostgreSQL and the backend (it needs `ba
 ## Backend
 
 ### How the chat works
-`POST /api/chat` answers questions about Johan and nothing else. A question goes through, in order: the on/off switch, the per-visitor rate limit, the quick-question shortcut (a button is answered from the knowledge file with no model), text cleaning that masks emails and phone numbers, a list of known attack phrases, the answer cache (a repeated question is served from memory with no model), the Prompt Guard 2 classifier, the daily budget, the model, and an output validator that replaces a leaked prompt, a link to another site or an off-topic answer with a fixed refusal. The model is Groq `gpt-oss-120b`; if Groq is rate limited or down, the router tries Gemini (only for visitors outside the EU, EEA, UK and Switzerland). The answer is sent first and the anonymous log row is written afterwards, so the assistant never depends on the database.
+`POST /api/chat` answers questions about Johan and nothing else. A question goes through, in order: the on/off switch, the per-visitor rate limit, text cleaning that masks emails and phone numbers, the quick-question shortcut (a button is answered from the knowledge file with no model), a list of known attack phrases, the answer cache (a repeated question is served from memory with no model), the Prompt Guard 2 classifier, the daily budget, the model, and an output validator that replaces a leaked prompt, a link to another site or an off-topic answer with a fixed refusal. The model is Groq `gpt-oss-120b`; if Groq is rate limited or down, the router tries Gemini (only for visitors outside the EU, EEA, UK and Switzerland). The answer is sent first and the anonymous log row is written afterwards, so the assistant never depends on the database.
 
-Every step, every failure and what each one logs is in [docs/chat-flow.md](docs/chat-flow.md). The request and response bodies and the error codes are in [docs/architecture.md](docs/architecture.md); `/docs` (Swagger UI) shows them live.
+Every step, every failure and what each one logs is in [docs/chat-flow.md](docs/chat-flow.md). The request and response bodies and the error codes are in [docs/architecture.md](docs/architecture.md); `/docs` (Swagger UI, development only: production turns it off) shows them live.
 
 | Endpoint | What it does |
 |---|---|
@@ -86,12 +93,16 @@ Copy `backend/.env.example` to `backend/.env`; nothing from it is committed. Eve
 | Variable | Needed | Description |
 |---|---|---|
 | `ENVIRONMENT` | | `development`, `test` or `production`. Production refuses a `CORS_ORIGINS` that is not explicit `https` |
-| `LOG_LEVEL` | | `DEBUG`, `INFO` (default), `WARNING` or `ERROR`. Logs are JSON, one line per request, never with the visitor's question |
+| `LOG_LEVEL` | | `DEBUG`, `INFO` (default), `WARNING` or `ERROR`. Logs are JSON, one `request` line per request plus event lines, never with the visitor's question |
 | `CORS_ORIGINS` | production | JSON list of the frontend origins allowed, for example `["https://johan.example"]` |
 | `MAX_BODY_BYTES` | | Bigger request bodies are rejected with `413` (default 16384) |
+| `APP_NAME` | | Name shown in the API metadata (default "Johan Rendon Portfolio API") |
 | `GROQ_API_KEY`, `GROQ_MODEL` | yes | Primary provider. Model names are settings because free tiers change often |
 | `GUARD_MODEL` | yes | Prompt Guard 2 model, called through the same Groq account |
 | `CANARY_TOKEN` | yes | Random string placed in the system prompt to detect a leak. Keep it stable: `python -c "import secrets; print('CANARY-' + secrets.token_hex(8))"` |
+| `LLM_TEMPERATURE`, `LLM_MAX_OUTPUT_TOKENS` | | Sampling temperature (default 0.3) and the answer limit in tokens, reasoning included (default 800) |
+| `GUARD_THRESHOLD` | | Prompt Guard score from which a message is blocked (default 0.8) |
+| `KNOWLEDGE_DIR` | | Folder of the knowledge files (default `backend/knowledge`) |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | optional | First fallback. Never used for the EU, EEA, UK, Switzerland or an unknown country |
 | `TRUST_CLOUDFLARE_HEADERS` | | `true` only when the API is really behind Cloudflare: the visitor's country comes from `CF-IPCountry`. With `false` (default) the country is unknown and Gemini is never used |
 | `SITE_URL` | | Public address of the portfolio. Answers may link to it; every other link is removed |
@@ -104,9 +115,9 @@ Copy `backend/.env.example` to `backend/.env`; nothing from it is committed. Eve
 | `MIGRATION_DATABASE_URL` | to migrate | The owner, used only by Alembic. Falls back to `DATABASE_URL` |
 | `RETENTION_DATABASE_URL` | for the job | The user `portfolio_retention` (`SELECT` and `DELETE`). Only the retention job reads it |
 | `CHAT_LOG_RETENTION_DAYS` | | How long a message is kept (default 90) |
-| `FORWARDED_ALLOW_IPS` | production | Read by uvicorn, not by the app: the address of the proxy (Caddy), so the real visitor IP is used for the rate limit |
+| `FORWARDED_ALLOW_IPS` | production | Read by uvicorn, not by the app: the address the proxy connects from, so the real visitor IP is used for the rate limit. In production it is the fixed address of the shared Caddy on the Docker network (set in `deploy/api/docker-compose.yml`) |
 
-The chat does not start if a required setting is missing, and says which one.
+The app does not start if the chat is on (`CHAT_ENABLED=true`, the default) and `GROQ_API_KEY`, `GROQ_MODEL`, `GUARD_MODEL` or `CANARY_TOKEN` is missing, and it says which one. Set `CHAT_ENABLED=false` to run without the chat.
 
 ### Database
 PostgreSQL holds two tables: the anonymous log of questions (`chat_messages`) and the ratings (`feedback`). No IP, user agent or other identifier is stored. The tables are created once by hand, then tracked by Alembic:
@@ -121,20 +132,20 @@ cd backend && alembic stamp head
 `schema.sql` always describes the latest schema, so a new database is only stamped; later changes are Alembic migrations. On an empty local database (`docker compose up db -d`) skip the SQL files and run `alembic upgrade head` as the owner. `alembic upgrade head --sql` prints the DDL without a database. A test fails if the ORM models and `schema.sql` differ, so change both together.
 
 ### Retention
-Rows older than `CHAT_LOG_RETENTION_DAYS` (90) are deleted, with their ratings, by a command that cron runs once a day on the server:
+Rows older than `CHAT_LOG_RETENTION_DAYS` (90) are deleted, with their ratings, by a command that cron runs once a day on the Lightsail instance:
 
 ```bash
 python -m app.jobs.purge_chat_log        # exit code 0 on success, 1 on any failure
 ```
 
 ```cron
-15 3 * * *  cd /srv/portfolio && docker compose run --rm backend python -m app.jobs.purge_chat_log
+15 9 * * *  cd ~/portfolio/deploy/api && docker compose --profile jobs run --rm retention 2>&1 | logger -t portfolio-retention
 ```
 
-It connects with `RETENTION_DATABASE_URL` (the `portfolio_retention` user), deletes in batches of 1,000 and logs how many rows it removed. The compose line is the plan for the VM and is installed with the deployment files.
+It connects with `RETENTION_DATABASE_URL` (the `portfolio_retention` user, kept in `deploy/api/.env.retention` on the server so the running API never holds it), deletes in batches of 1,000 and logs how many rows it removed. Setting up the cron entry is part of [docs/deploy.md](docs/deploy.md).
 
 ### Evaluation of the assistant
-`backend/evals/` has 33 attacks and 31 recruiter questions, in Spanish and English, and a runner you launch by hand against the real models (it is not in the CI because it spends free-tier quota):
+`backend/evals/` has 34 attacks and 34 recruiter questions, in Spanish and English, and a runner you launch by hand against the real models (it is not in the CI because it spends free-tier quota):
 
 ```bash
 cd backend
@@ -158,7 +169,8 @@ GitHub Actions runs the same on every push to `main` and on every pull request, 
 - [x] Chat widget with quick questions and answer ratings
 - [x] Anonymous log in PostgreSQL with 90-day retention
 - [x] Evaluation set for the assistant
-- [ ] Deployment with custom domain (production compose file, Caddy, cron for the retention job)
+- [x] Deployment files: shared Caddy, API compose with the retention job, image and deploy workflow, Cloudflare Workers configuration
+- [ ] First production deploy and the live links
 - [x] Demo of the Gedocs project with test data
 
 ## Author
