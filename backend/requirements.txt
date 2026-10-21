@@ -1,4 +1,4 @@
-fastapi==0.143.2
+fastapi==0.146.0
 # Pinned directly: FastAPI does not cap Starlette, and 1.x changed the TestClient to httpx2.
 starlette==1.8.0
 uvicorn[standard]==0.54.0
