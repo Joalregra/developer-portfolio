@@ -25,6 +25,8 @@ class ChatStatus(StrEnum):
 
     ANSWERED = "answered"
     ANSWERED_QUICK = "answered_quick"
+    # A repeated question served from the in-memory cache: no model was called.
+    ANSWERED_CACHED = "answered_cached"
     REFUSED_OFF_TOPIC = "refused_off_topic"
     REFUSED_INJECTION = "refused_injection"
     RATE_LIMITED = "rate_limited"
@@ -58,7 +60,7 @@ class ChatMessage(Base):
         CheckConstraint(_in_list("provider", LlmProvider), name="provider_valid"),
         # An answered row always has its answer and the provider that produced it.
         CheckConstraint(
-            "status NOT IN ('answered', 'answered_quick') OR answer IS NOT NULL",
+            "status NOT IN ('answered', 'answered_quick', 'answered_cached') OR answer IS NOT NULL",
             name="answered_has_answer",
         ),
         CheckConstraint(
@@ -66,6 +68,9 @@ class ChatMessage(Base):
         ),
         CheckConstraint(
             "status <> 'answered_quick' OR provider = 'none'", name="quick_without_llm"
+        ),
+        CheckConstraint(
+            "status <> 'answered_cached' OR provider = 'none'", name="cached_without_llm"
         ),
         # Off-topic refusals and invalid output both come from a model call.
         CheckConstraint(

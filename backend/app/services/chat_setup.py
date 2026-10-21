@@ -13,6 +13,7 @@ import groq
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import Settings
+from app.services.answer_cache import AnswerCache
 from app.services.budget import DailyBudget
 from app.services.chat_log_writer import ChatLogWriter
 from app.services.chat_service import ChatService
@@ -97,6 +98,10 @@ def build_chat_runtime(
         ),
         rate_limiter=RateLimiter(settings.rate_limit_per_minute, settings.rate_limit_per_day),
         writer=writer,
+        answer_cache=AnswerCache(
+            ttl_seconds=settings.answer_cache_ttl_seconds,
+            max_entries=settings.answer_cache_max_entries,
+        ),
         request_timeout_seconds=settings.request_timeout_seconds,
     )
     return ChatRuntime(service=service, writer=writer, closers=closers)

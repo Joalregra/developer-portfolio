@@ -124,71 +124,32 @@ Total: 2 years of studies at SENA, plus a 6-month traineeship as a FullStack Dev
 ## 6. Projects
 
 ### Project 1: Gedocs - institutional document archive and PQRSD management system
-- Period: July 2024 to April 2026.
-- Johan's role: full-stack QA (tested both the frontend and the backend) and frontend (created the mockups and designed several interfaces in React). Johan also led the test suite: PHPUnit for the backend and Vitest for the frontend.
-- Team: 9 people.
-- Users: about 60.
+- Period: July 2024 to April 2026. Team: 9 people. Users: about 60.
+- Johan's role: full-stack QA (tested the frontend and the backend) and frontend (mockups and several React interfaces). Johan also led the test suite: PHPUnit for the backend and Vitest for the frontend.
 - Stack: Laravel (PHP), React (JavaScript), MySQL, PHPUnit, Vitest, DigitalOcean, Dokploy.
-- What it is: a web application for document archiving, similar to a drive, plus management of PQRSD (Colombian petitions, complaints, claims, suggestions and reports).
-- Features: creation of meeting minutes (actas), filing numbers (radicado) and document organization, following Colombia's General Archives Law. Document retention schedules (tablas de retencion documental) with later archiving, and generation of PQRSD-style PDFs.
-- Purpose: built for the document management area of SENA, as a training tool for the apprentices of that area.
-- Status: deployed to production by Johan on DigitalOcean using containerized deployment with Dokploy, functional and in use by real users.
+- What it is: a web application for document archiving, similar to a drive, plus management of PQRSD (Colombian petitions, complaints, claims, suggestions and reports). Features: meeting minutes (actas), filing numbers (radicado) and document organization following Colombia's General Archives Law, document retention schedules (tablas de retencion documental) with later archiving, and generation of PQRSD-style PDFs.
+- Built for the document management area of SENA, as a training tool for the apprentices of that area.
+- Status: deployed to production by Johan on DigitalOcean using containers and Dokploy, functional and in use by real users.
 - How to see it: there is a public demo with fictitious data, linked from the Gedocs card in the Projects section of the portfolio. The data reset every day at 3:00 a.m. (Colombia time). No sign-up or credentials are needed: on the login screen, under "Entrar sin registrarte" ("Enter without registering"), a visitor picks one of four roles (Administrator, Supervisor, Assistant or Department). The interface of the demo is in Spanish.
 
 ### Project 2: Competitive intelligence platform for a technology ecosystem
-- Period: April 2026 to June 2026.
-- Role: FullStack Developer Trainee (college trainee PRD) at Globant. Team of 3 people.
+- Period: April 2026 to June 2026. Role: FullStack Developer Trainee (college trainee PRD) at Globant. Team of 3 people.
 - What it is: a platform that collects posts from developer communities, analyzes them with AI, and shows sentiment, churn risk, NPS and alert metrics on a dashboard.
 - Stack: Python, FastAPI, SQLAlchemy, PostgreSQL, Pydantic, Gemini, pytest, React 18, TypeScript, Vite, TanStack Query, Zustand, Tailwind, Vitest, React Testing Library, MSW.
-
-AI-powered scraper and data ingestion (backend):
-- Standardized Gemini's structured output. Wrote a resolver that flattens the Pydantic JSON Schema ($ref, $defs, anyOf, const) into a format the model accepts, so responses arrive as valid JSON.
-- Improved the search engine to query specific forums and communities instead of the whole web, and generated query variants per product to increase coverage.
-- Built per-product ingestion endpoints that search, analyze with the LLM and store the results in PostgreSQL.
-- Separated the chat query flow from the ingestion and persistence flow.
-
-Live monitoring module (backend and frontend):
-- Backend: designed 11 REST endpoints with FastAPI to list posts and query their metrics. Filters (sentiment, platform, bug, business pillar) and pagination run in SQL, not in memory, and each query selects only the columns it needs. Counters use SQL aggregates (COUNT, COUNT(DISTINCT ...)).
-- Frontend: built with a feature-first architecture (services, hooks, components, containers, types). Live feed with pagination, sentiment and business-category filters, search, feed statistics and a loading animation. Client-side filtering with useMemo, plus a global refresh token in Zustand to update the feed from the header.
-
-Full-stack test suite:
-- Backend (pytest): 25 passing tests on a competitor-analysis module, covering CRUD (including database schema error handling), the Pydantic schema contract and the HTTP endpoints. 100% coverage on the schemas. Set up shared fixtures and the pytest configuration.
-- Frontend (Vitest, React Testing Library, MSW): 29 passing tests across 8 components. Built the testing infrastructure from scratch: Vitest config, global setup, render utilities with providers, mock data and MSW handlers simulating 4 endpoints.
-
-Documentation:
-- Documented the monitoring module's schema and changes, the frontend integration guide (data flow, state and filters) and both test suites, so the team can maintain and extend them.
+- AI-powered scraper and ingestion (backend): standardized Gemini's structured output with a resolver that flattens the Pydantic JSON Schema ($ref, $defs, anyOf, const) so responses arrive as valid JSON; improved the search engine to query specific forums and communities instead of the whole web, with query variants per product to increase coverage; built per-product ingestion endpoints (search, LLM analysis, storage in PostgreSQL), separate from the chat query flow.
+- Live monitoring module: backend with 11 REST endpoints in FastAPI to list posts and query their metrics. Filters (sentiment, platform, bug, business pillar) and pagination run in SQL, each query selects only the columns it needs, and counters use SQL aggregates. Frontend with a feature-first architecture (services, hooks, components, containers, types): live feed with pagination, filters, search and statistics, client-side filtering with useMemo, and a global refresh token in Zustand.
+- Tests: backend (pytest) 25 passing tests on a competitor-analysis module (CRUD, Pydantic schema contract and HTTP endpoints, with 100% coverage on the schemas); frontend (Vitest, React Testing Library, MSW) 29 passing tests across 8 components, with the testing infrastructure built from scratch (configuration, render utilities with providers, MSW handlers simulating 4 endpoints).
+- Documentation of the monitoring module, the frontend integration guide and both test suites, so the team can maintain and extend them.
 
 ### Project 3: AI-driven product intelligence reporting platform
-- Period: June 2026 to October 2026.
-- Role: FullStack Developer Trainee (college trainee PRD) at Globant, with Full Stack and AI work. Team of 3 people.
+- Period: June 2026 to October 2026. Role: FullStack Developer Trainee (college trainee PRD) at Globant, with Full Stack and AI work. Team of 3 people.
 - What it is: a system that combines data from external catalogs, web search and language models to generate structured product-intelligence reports. It is built around a multi-phase AI pipeline and a semantic search (RAG) layer over the generated reports.
 - Stack: Python, FastAPI, SQLAlchemy, PostgreSQL, Pydantic, Gemini, Groq, pytest, React 18, TypeScript, Vite, Zustand, Tailwind, Vitest, fastembed, pgvector.
 - Status: deployed successfully, runs in production in the company's private environment, and was handed over to an internal team for daily maintenance. Code and internal details cannot be shared.
-
-Authentication and access control:
-- Implemented registration and login, then migrated it from client-side tokens to httpOnly cookies with double-submit CSRF protection.
-- Designed the role model (admin and developer) and built the endpoints to grant and revoke the admin role. They require the acting admin's own password and use an atomic transfer, so the system can never end up without an administrator.
-- Built the role-management admin page on the frontend: a role catalog with live counts and grant/revoke modals.
-
-AI pipeline and report generation:
-- Built the Full Report pipeline: 10 research-and-labeling "lenses" over a single report, with server-side PDF export.
-- Designed the routing layer across LLM providers, with automatic failover and per-provider concurrency control, and the persistence of per-call token usage, including its endpoint and an admin dashboard with charts.
-- Fixed the flattening of the Pydantic JSON Schema sent to the model to force structured output (refs, defs, unions), preventing unparseable responses.
-- Implemented reuse of a previous report's evidence for the same product ("DB-first reuse") to avoid repeating unnecessary searches and AI calls.
-
-Evidence and citations:
-- Fixed a citation bug that could leave a report without a real citable source.
-
-Notifications:
-- Built the notification system, with an inbox open to any user and request resolution restricted to administrators.
-- Added alerts for reached report-generation quota, AI-degraded analysis, and provider or API-key issues.
-
-Vector database and semantic search (RAG):
-- Designed and implemented the full vector pipeline: splitting each report into search units with boundaries taken from the content itself (not a fixed token window), and local embedding generation.
-- Built hybrid retrieval (dense plus lexical search, fused by rank).
-- Added an auditable log of every semantic search and real provenance (product, category, source, date) for every retrieved fragment.
-- Extended vector indexing to readers' comments on a report and their replies, each with its own lifecycle (pruning, mass reindexing, periodic sweep). Replies live in their own collection so they do not change what a missing comment means.
-- Built the semantic-search admin page (run searches, trigger reindexing, inspect the query history) and later opened plain search to any authenticated user.
+- Authentication and access control: registration and login, migrated from client-side tokens to httpOnly cookies with double-submit CSRF protection; a role model (admin and developer) with endpoints to grant and revoke the admin role, which require the acting admin's own password and use an atomic transfer, so the system can never end up without an administrator; and the role-management admin page on the frontend.
+- AI pipeline and report generation: the Full Report pipeline (10 research-and-labeling "lenses" over a single report, with server-side PDF export); a routing layer across LLM providers with automatic failover, per-provider concurrency control and persisted per-call token usage (endpoint and admin dashboard with charts); the same Pydantic JSON Schema flattening to force structured output; reuse of a previous report's evidence for the same product ("DB-first reuse") to avoid unnecessary searches and AI calls; and a fix for a citation bug that could leave a report without a real citable source.
+- Notifications: an inbox open to any user, with request resolution restricted to administrators, and alerts for reached report-generation quota, AI-degraded analysis, and provider or API-key issues.
+- Vector database and semantic search (RAG): each report split into search units with boundaries taken from the content itself (not a fixed token window), local embeddings, hybrid retrieval (dense plus lexical search, fused by rank), an auditable log of every semantic search with real provenance (product, category, source, date) for every retrieved fragment, and vector indexing of readers' comments on a report and their replies, each with its own lifecycle (pruning, mass reindexing, periodic sweep; replies in their own collection). Also the semantic-search admin page (run searches, trigger reindexing, inspect the query history), with plain search later opened to any authenticated user.
 
 ---
 
@@ -206,62 +167,50 @@ Vector database and semantic search (RAG):
 ## 8. How Johan Works
 
 ### Frontend and backend experience
-- Backend: built endpoints and RAG systems with AI-driven architectures during the traineeship.
-- Frontend: on the Gedocs project, created mockups and designed several interfaces in React. Also built the live monitoring feed and admin pages during the traineeship.
+- Backend: built endpoints and RAG systems with AI-driven architectures during the traineeship. Frontend: Gedocs mockups and React interfaces, plus the live monitoring feed and admin pages at Globant.
 
 ### What Johan looks for
-- A company where Johan can offer services and knowledge in the focus area (Python backend, React, DevOps).
-- Rather than one strict industry, Johan is interested in companies that build software products with a direct, real and measurable impact on their users.
+- A company where Johan can offer services and knowledge in the focus area (Python backend, React, DevOps). Rather than one strict industry, Johan is interested in companies that build software products with a direct, real and measurable impact on their users.
 - Technology product and SaaS companies, where software is the core of the business: iterating on a product, safely refactoring legacy code, and seeing how technical improvements affect the daily experience of customers.
 - Companies that solve real operational problems: automating processes or building tools that make other people's work easier (for example logistics, business management, fintech or operational platforms).
 
 ### Hardest technical challenges
 - Flattening the Pydantic JSON Schema for Gemini: the model rejected schemas that use references ($ref, $defs), unions (anyOf) and constants (const), so responses were not valid JSON. Johan wrote a resolver that flattens the schema into a format the model accepts.
-- Failover between LLM providers: Johan designed a routing layer across LLM providers with automatic failover and per-provider concurrency control, and persisted per-call token usage with an endpoint and an admin dashboard with charts.
+- Failover between LLM providers: a routing layer with automatic failover and per-provider concurrency control, plus per-call token usage persisted with an endpoint and an admin dashboard with charts.
 
 ### A mistake and the lesson
-- On the academic project, at the start, there was a communication error with the client. The requirements were unclear, which duplicated work and led the team to build features for methodologies the client did not want. To solve it, the team held a clarification meeting with the client to re-route the features, and it took a couple of days to correct the functionality.
+- On the academic project, at the start, there was a communication error with the client. The requirements were unclear, which duplicated work and led the team to build features for methodologies the client did not want. The team held a clarification meeting with the client to re-route the features, and it took a couple of days to correct the functionality.
 - Lesson learned: since then, the team asks the client questions constantly, proposes options and grounds the client's ideas when they drift toward something that is not tangible, so both sides reach an agreement and work is not duplicated. Every agreement is documented in writing.
 
 ### Feedback received and applied
-- A coworker at Globant told Johan that giving the AI the full context again in every new chat was unproductive.
-- Johan applied it by starting to use AI with memory systems. This saved tokens and made AI-assisted work faster.
-- Johan also documents the processes and the progress of the context the AI works with, within the same piece of work, to keep the context and avoid drifting away from the workflow.
+- A coworker at Globant told Johan that giving the AI the full context again in every new chat was unproductive. Johan applied it by starting to use AI with memory systems, which saved tokens and made AI-assisted work faster. Johan also documents the processes and the progress of the context the AI works with, within the same piece of work, to keep the context and avoid drifting away from the workflow.
 
 ### Use of AI when programming
 - Johan uses AI as a support tool.
 - Spec-driven development with OpenSpec: the specs are written before the code and describe what the AI will do. Johan validates manually by reviewing the specs at a technical level, and by running a "reconcile", a comparison between the instructions and the code that exists.
 - Normal AI-assisted programming: Johan reviews manually by running the program and checking the structure of the code the AI produces.
 
-### Git and workflow
-- Pull requests, push, pull, merge, cherry-pick, rebase, tags and releases.
-- Learning GitHub Actions as of 2026-10.
-- Uses GitHub Projects for tracking work.
-
-### Deployment
-- Deployed Gedocs with Dokploy (a Docker-based system) on DigitalOcean, without automated CI/CD.
-- Manually deployed another project on a Windows Server machine.
-
-### Testing and quality
-- Backend tests with pytest and PHPUnit; frontend tests with Vitest, React Testing Library and MSW.
-- Manual QA of frontend and backend on Gedocs.
+### Git, deployment and testing
+- Git and workflow: pull requests, push, pull, merge, cherry-pick, rebase, tags and releases. Learning GitHub Actions as of 2026-10. Uses GitHub Projects for tracking work.
+- Deployment: Gedocs with Dokploy (a Docker-based system) on DigitalOcean, without automated CI/CD; another project deployed manually on a Windows Server machine.
+- Testing and quality: backend tests with pytest and PHPUnit; frontend tests with Vitest, React Testing Library and MSW; manual QA of frontend and backend on Gedocs.
 
 ### Legacy code and frustration
 - Approach: empathy, patience and a systematic method. Old code was written under different context and time limits, so the priority is to understand it, not to judge it.
 - Step 1, analysis and documentation: before changing a single line, Johan reads the flow, looks for existing documentation and takes notes to understand the business logic.
-- Step 2, safe and gradual refactoring: Johan does not try to change everything at once. Johan applies the "boy scout rule" (leave the code a bit better than found), making small modular improvements while building new features.
+- Step 2, safe and gradual refactoring: Johan does not try to change everything at once and applies the "boy scout rule" (leave the code a bit better than found), making small modular improvements while building new features.
 - Step 3, constant testing: Johan tests changes thoroughly so they do not break the stability or dependencies of the current system.
 - Johan handles frustration by breaking big problems into small, logical tasks.
 
 ### Staying up to date
-Learning is a daily habit. Sources and methods:
+Learning is a daily habit:
 - Official documentation: when a technology or framework ships a major update, Johan goes straight to its release notes (changelogs) and official guides.
-- Communities and newsletters: Johan follows specialized channels such as Medium, dev.to and software development subreddits, and subscribes to technical newsletters that summarize weekly industry trends.
+- Communities and newsletters: Johan follows channels such as Medium, dev.to and software development subreddits, and subscribes to technical newsletters that summarize weekly industry trends.
 - Hands-on practice: when a new tool is interesting, Johan builds a small side project or proof of concept to understand its advantages and limits in a real setting.
 
 ### Daily organization tools
 - Task and project management: Kanban boards in Trello and Jira to break down pending work, prioritize daily goals and measure progress visually.
-- Version control and communication: Git, GitHub and GitLab for code, and Slack, Discord and Microsoft Teams for fluid communication with teammates.
+- Version control and communication: Git, GitHub and GitLab for code, and Slack, Discord and Microsoft Teams to communicate with teammates.
 
 ### Outside of code
 - Johan enjoys watching series and movies.

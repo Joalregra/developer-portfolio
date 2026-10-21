@@ -292,6 +292,8 @@ async def main(argv: list[str] | None = None) -> int:
             "rate_limit_per_minute": 10_000,
             "rate_limit_per_day": 100_000,
             "daily_llm_budget": 100_000,
+            # The evaluation measures the model, so no answer may come from memory.
+            "answer_cache_ttl_seconds": 0,
         }
     )
     if missing := settings.missing_chat_settings():

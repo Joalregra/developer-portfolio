@@ -3,6 +3,7 @@
 
 import asyncio
 
+import httpx
 from google import genai
 from google.genai import errors, types
 from pydantic import ValidationError
@@ -55,6 +56,10 @@ class GeminiProvider:
             raise ProviderUnavailableError("timeout") from exc
         except errors.APIError as exc:
             raise _translate(exc) from exc
+        except httpx.HTTPError as exc:
+            # The SDK does not wrap network failures (a connection reset, "server disconnected").
+            # Only the type is kept: the message can echo the request.
+            raise ProviderUnavailableError(type(exc).__name__) from exc
 
         candidate = response.candidates[0] if response.candidates else None
         finish = candidate.finish_reason.name if candidate and candidate.finish_reason else None

@@ -8,8 +8,14 @@
 -- `-v app_password=...`, psql stops with a syntax error and no role is created. Put the same
 -- password in the DATABASE_URL of the app.
 --
--- On Neon: the web SQL editor does not support psql variables. Create the role portfolio_app in
--- the Neon console (Roles) instead, delete the CREATE ROLE statement below and run the rest.
+-- On Neon: the web SQL editor does not support psql variables. Paste this file into the SQL
+-- editor and write the password between quotes where :'app_password' is. Do NOT create the role
+-- from the Neon console (Roles): roles made there, or through the CLI or the API, join
+-- neon_superuser (pg_read_all_data and pg_write_all_data), which defeats the limits below. A role
+-- made with CREATE ROLE has no extra privileges. Afterwards check it:
+--
+--   SELECT rolname, pg_has_role(rolname, 'neon_superuser', 'member') AS is_neon_superuser
+--   FROM pg_roles WHERE rolname = 'portfolio_app';   -- must be false
 --
 -- The app can only INSERT and SELECT. It cannot UPDATE, DELETE or change the schema, so a bug or
 -- an injection in the app cannot erase the log. Migrations use the owner; the retention job has

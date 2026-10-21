@@ -9,9 +9,14 @@
 -- the app cannot erase the log. This user can only SELECT (to find the old rows) and DELETE.
 -- It cannot INSERT, UPDATE or change the schema.
 --
--- On Neon: the web SQL editor does not support psql variables. Create the role
--- portfolio_retention in the Neon console (Roles) instead, delete the CREATE ROLE statement
--- below and run the rest.
+-- On Neon: the web SQL editor does not support psql variables. Paste this file into the SQL
+-- editor and write the password between quotes where :'retention_password' is. Do NOT create the
+-- role from the Neon console (Roles): roles made there, or through the CLI or the API, join
+-- neon_superuser (pg_read_all_data and pg_write_all_data), which defeats the limits below. A role
+-- made with CREATE ROLE has no extra privileges. Afterwards check it:
+--
+--   SELECT rolname, pg_has_role(rolname, 'neon_superuser', 'member') AS is_neon_superuser
+--   FROM pg_roles WHERE rolname = 'portfolio_retention';   -- must be false
 
 BEGIN;
 
