@@ -2,14 +2,17 @@
 
 ```mermaid
 flowchart LR
-  V[Visitor / recruiter] --> F[Frontend<br/>React + TypeScript<br/>Cloudflare Pages]
-  F -->|REST| B[Backend<br/>FastAPI<br/>Docker + Caddy on a VM]
+  V[Visitor / recruiter] --> F[Frontend<br/>React + TypeScript<br/>Cloudflare Workers, static assets]
+  F -->|REST| P[Shared Caddy<br/>HTTPS, security headers]
+  P --> B[Backend<br/>FastAPI in Docker<br/>AWS Lightsail]
   B --> K[(Knowledge file<br/>ChatbotKnowledge.en.md)]
   B --> L1[Groq<br/>primary LLM]
   B -.fallback.-> L2[Gemini<br/>secondary LLM]
-  B --> D[(PostgreSQL<br/>Neon)]
-  J[Daily retention job<br/>cron on the VM] --> D
+  B --> D[(PostgreSQL<br/>Neon, us-east-1)]
+  J[Daily retention job<br/>cron on the Lightsail instance] --> D
 ```
+
+The backend shares one Lightsail instance with the Gedocs demo, behind a single Caddy. Where each piece runs, how a deploy works and how to set the server up are in [`deploy.md`](deploy.md).
 
 | Part | Responsibility |
 |---|---|
@@ -26,7 +29,7 @@ flowchart LR
 // POST /api/chat
 { "message": "string, 1 to 1000 characters",
   "locale": "es" | "en",                       // language of the site UI; the answer follows the question
-  "history": [{ "role": "user" | "assistant", "content": "string" }],   // at most 6 earlier messages
+  "history": [{ "role": "user" | "assistant", "content": "string, 1 to 1000 characters" }],   // at most 6 earlier messages
   "quick_question_id": "projects" | "stack" | "production" | "availability" | "challenge" | "ai" }  // optional
 
 // 200 (also for refusals)
@@ -43,8 +46,10 @@ flowchart LR
 
 | Status | `code` | Meaning |
 |---|---|---|
+| 413 | `payload_too_large` | The request body is bigger than `MAX_BODY_BYTES` (16 KB by default; the proxy cuts at 64 KB before that) |
 | 422 | `invalid_request` | Body not valid (empty, over 1000 characters, unknown field, more than 6 history messages) |
 | 429 | `rate_limited` | Too many requests; `Retry-After` says when to try again |
+| 500 | `internal_error` | An unexpected error. The body carries the `request_id` to look it up in the logs, and nothing else |
 | 502 | `invalid_model_output` | The model answered twice without a usable answer |
 | 503 | `assistant_paused` | Switched off, or today's model budget is spent |
 | 503 | `assistant_unavailable` | No model could answer in time |
@@ -77,19 +82,19 @@ When `section` is present, the UI links to that part of the page under the answe
 
 ## Frontend build
 
-`npm run build` type-checks, builds the client, builds a server bundle of the app and prerenders `/es/` and `/en/` into static HTML, so the content is in the HTML itself (SEO, link previews, first paint) and React hydrates it. Set `VITE_SITE_URL` to enable canonical/hreflang tags, absolute Open Graph URLs and `sitemap.xml`.
+`npm run build` type-checks, builds the client, builds a server bundle of the app and prerenders `/es/` and `/en/` into static HTML, so the content is in the HTML itself (SEO, link previews, first paint) and React hydrates it. Set `VITE_SITE_URL` to enable canonical/hreflang tags, absolute Open Graph URLs and `sitemap.xml`. The last build step, `scripts/security-headers.mjs`, writes `dist/_headers` with the security headers Cloudflare adds to every response; its Content-Security-Policy is computed from the built pages (the hashes of their inline script and style) and from `VITE_API_URL`, so `VITE_API_URL` must be set in the Cloudflare build variables.
 
 ## Repository layout
 
 ```
-portfolio/
+developer-portfolio/
 ├── frontend/              React + Vite + TypeScript + Tailwind
 │   ├── public/cv/         CV in PDF
 │   └── src/
 │       ├── app/           App shell and layout composition
-│       ├── sections/      Page sections: Hero, About, Experience, Projects, Skills, Contact
+│       ├── sections/      Page sections: Hero, Projects, Experience, About, Skills, Education, Contact
 │       ├── components/    Reusable UI (ui/) and layout pieces (layout/)
-│       ├── features/chat/ Chat widget: components, hooks, API calls and types
+│       ├── features/chat/ Chat widget: components, context and hooks (the HTTP calls are in services/)
 │       ├── hooks/         Shared hooks
 │       ├── i18n/          Spanish and English UI strings
 │       ├── data/          Portfolio content (profile, projects, skills)
@@ -112,7 +117,10 @@ portfolio/
 │   ├── knowledge/         Assistant knowledge files
 │   ├── evals/             Attack and recruiter-question set, run by hand against the real models
 │   └── tests/             pytest
-├── deploy/                Caddyfile for the backend VM
-├── docs/                  Architecture, decisions and screenshots
+├── deploy/                Production files for the Lightsail instance
+│   ├── proxy/             Shared Caddy (compose and Caddyfile)
+│   ├── api/               API compose, env examples and the retention job
+│   └── scripts/           deploy.sh, run on the server by CI
+├── docs/                  Architecture, decisions, chat flow, deployment runbook and screenshots
 └── .github/               CI and Dependabot
 ```

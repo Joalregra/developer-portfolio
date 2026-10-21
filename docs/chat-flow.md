@@ -1,6 +1,6 @@
 # How the chat works
 
-`POST /api/chat` answers recruiters' questions about Johan, and nothing else. This page explains the path of one question, what happens when something fails, and what to watch when it runs. The rules behind it are numbered in the backend brief (`ERR-`, `DATA-`, `PI-` ids appear in code comments).
+`POST /api/chat` answers recruiters' questions about Johan, and nothing else. This page explains the path of one question, what happens when something fails, and what to watch when it runs. The rules behind it come from a private backend design document: its `ERR-`, `DATA-` and `PI-` ids appear in code comments.
 
 ## Path of one question
 
@@ -10,10 +10,11 @@ flowchart TD
   S -- no --> P[503 assistant_paused]
   S -- yes --> R{Rate limit per visitor}
   R -- over --> L[429 rate_limited + Retry-After]
-  R -- ok --> K{Quick-question button?}
+  R -- ok --> C[Clean the text<br/>mask emails and phone numbers<br/>drop the browser's assistant turns]
+  C -- nothing left --> E[422 invalid_request]
+  C --> K{Quick-question button?}
   K -- yes --> QA[Fixed answer from the knowledge file<br/>no model, no budget]
-  K -- no --> C[Clean the text<br/>mask emails and phone numbers<br/>drop the browser's assistant turns]
-  C --> H{Known attack phrase?}
+  K -- no --> H{Known attack phrase?}
   H -- yes --> X[200 refused + strike for the visitor]
   H -- no --> AC{Same question already answered?<br/>no history, same language}
   AC -- yes --> CA[200 stored answer<br/>no model, no budget]
@@ -56,7 +57,8 @@ No single layer is enough. The real protection is that the assistant has no tool
 | Invalid request, or a question with no text left after cleaning | 422 `invalid_request` | |
 | Too many requests | 429 `rate_limited` + `Retry-After` | |
 | Switch off, or budget spent | 503 `assistant_paused` | `budget_used` at 50, 80 and 100 % |
-| Attack detected | 200 `refused: true` | `injection_attempt`, then `ip_blocked` after 3 in 10 min |
+| Attack phrase detected (phrase list) | 200 `refused: true` and a strike for the visitor | `injection_attempt`, then `ip_blocked` after 3 in 10 min |
+| Attack detected by Prompt Guard | 200 `refused: true`, with no strike (the classifier has more false positives than the list) | `chat_completed` with `guard_result: classifier` |
 | Prompt Guard down or slow | The question goes on | `guard_unavailable` |
 | Groq 429 | The wait is remembered for everyone, so later visitors do not call Groq during it. Waits for it (up to 5 s with a fallback, 20 s without, as many times as the deadline allows), or goes to Gemini | `provider_failed` with `retry_after`, `provider_queue_wait` |
 | Groq daily quota spent | Gemini, and Groq is paused until its reset. A 429 is also read as daily when it asks for more than 2 minutes | `provider_failed`, `provider_paused` |
@@ -86,7 +88,7 @@ Measured on 2026-10-15 with the real prompt (about 5,100 tokens):
 
 What the code does about it: a visitor who can use Gemini goes to Gemini at once. A visitor who cannot (EU, EEA, UK, Switzerland, or an unknown country) waits for the `retry-after`, up to 20 s. Beyond that they get a 503 with the contact email.
 
-If this turns out to be too tight, the options are (any can be combined): shorten the knowledge so two questions fit in a minute, put the API behind Cloudflare so the country is known and Gemini can serve everyone outside the excluded regions, move Groq to a paid tier, or pay for Gemini and drop the regional rule. Each one is a decision for Johan; see `docs/decisions.md`.
+If this turns out to be too tight, the options are (any can be combined): shorten the knowledge so two questions fit in a minute, proxy the API host through Cloudflare (it is DNS only today, decision 20) so the country is known and Gemini can serve everyone outside the excluded regions, move Groq to a paid tier, or pay for Gemini and drop the regional rule. Each one is a decision for Johan; see `docs/decisions.md`.
 
 ## Where to look when it misbehaves
 
