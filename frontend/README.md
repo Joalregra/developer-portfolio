@@ -6,13 +6,13 @@ The page is built for recruiters and technical leads, who are often on a phone. 
 
 ## Status
 
-| Part                                                                    | State                                                                                                                                                                                                           |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sections: hero, projects, experience, about, skills, education, contact | Done                                                                                                                                                                                                            |
-| Spanish and English, light and dark theme                               | Done                                                                                                                                                                                                            |
-| Assistant UI (panel, quick questions, every error state)                | Done                                                                                                                                                                                                            |
-| `POST /api/chat` endpoint                                               | Built in `backend/`. With `VITE_API_URL` empty the panel shows "assistant unavailable"                                                                                                                          |
-| Domain and hosting                                                      | Cloudflare Workers with static assets, set up by `wrangler.jsonc`. The domain is added in the Cloudflare dashboard and `VITE_SITE_URL` is set in its build variables. See [`docs/deploy.md`](../docs/deploy.md) |
+| Part                                                                    | State                                                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sections: hero, projects, experience, about, skills, education, contact | Done                                                                                                                                                                                                                                                |
+| Spanish and English, light and dark theme                               | Done                                                                                                                                                                                                                                                |
+| Assistant UI (panel, quick questions, every error state)                | Done                                                                                                                                                                                                                                                |
+| `POST /api/chat` endpoint                                               | Built in `backend/`. With `VITE_API_URL` empty the panel shows "assistant unavailable"                                                                                                                                                              |
+| Domain and hosting                                                      | Live at `johanrendon.com` on Cloudflare Workers with static assets, set up by `wrangler.jsonc`. The domain and the build variables (`VITE_API_URL`, `VITE_SITE_URL`) are set in the Cloudflare dashboard. See [`docs/deploy.md`](../docs/deploy.md) |
 
 ## Requirements
 
@@ -139,6 +139,5 @@ The site is published by Cloudflare Workers Builds, which runs `npm run build` a
 
 ## Pending
 
-- Set `VITE_SITE_URL` in the Cloudflare build variables once the domain is connected (canonical tags, hreflang and `sitemap.xml` depend on it).
 - Replace the temporary portrait in `public/img/` with a recent professional photo (keep the two sizes and the 3:4 ratio).
 - Add verification links to the Globant certificates if they become available (`verifyUrl` in `src/data/profileSections.ts`). Only the Anthropic one has one today.
