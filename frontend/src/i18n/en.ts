@@ -144,6 +144,8 @@ export const en: Messages = {
     retry: 'Try again',
     unavailable: 'The assistant is not available right now. You can email me at',
     rateLimit: 'You have asked many questions in a row. Wait a minute and try again.',
+    questionLimit:
+      'You have reached the assistant question limit for now. The quick questions still work, and you can email me at',
     offline: 'No connection. Check your internet.',
     loading: 'Loading the assistant',
     feedback: {
