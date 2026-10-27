@@ -11,6 +11,7 @@ Policy, in short:
 - 400, 401, 403, 404: our bug or key. The fallback would not help, so stop.
 - Invalid output: one more try with the same provider, except when the answer was cut short.
 - The fallback is only used for visitors whose country is known and allowed (LLM-08).
+- Every call reserves tokens from the daily budget first and settles to the real usage after.
 This is the only place that retries (one retry layer).
 """
 
@@ -99,6 +100,9 @@ DEFAULT_PAUSE_SECONDS: Final = 60.0
 DEFAULT_DAILY_PAUSE_SECONDS: Final = 900.0
 # Waiting for the lock longer than this is worth a log line.
 QUEUE_WAIT_LOG_SECONDS: Final = 1.0
+# Rough size of a prompt: characters per token. The real prompt measures 4.4 (22,800 characters
+# are 5,180 tokens); 4 makes the estimate a little high, which is the safe side for a quota.
+CHARS_PER_TOKEN: Final = 4
 # Finish reasons that mean the answer was cut short (Groq says "length", Gemini "MAX_TOKENS").
 CUT_OFF_REASONS: Final = frozenset({"length", "MAX_TOKENS"})
 
@@ -120,6 +124,7 @@ class LLMRouter:
         *,
         primary_timeout: float,
         fallback_timeout: float,
+        max_output_tokens: int,
         clock: Callable[[], float] = time.monotonic,
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ) -> None:
@@ -128,6 +133,7 @@ class LLMRouter:
         self.budget = budget
         self.primary_timeout = primary_timeout
         self.fallback_timeout = fallback_timeout
+        self.max_output_tokens = max_output_tokens
         self._clock = clock
         self._sleep = sleep
         self._paused_until: dict[LlmProvider, float] = {}
@@ -143,7 +149,7 @@ class LLMRouter:
             NoProviderAvailableError: No allowed provider answered in time.
             ProviderRequestError: Our request or key is wrong (do not retry).
             ProviderOutputError: The model gave an invalid answer twice, or was cut short.
-            BudgetExhaustedError: Today's model calls are all used.
+            BudgetExhaustedError: Today's token budget is spent.
         """
         retry_hint: float | None = None
         if not self._is_paused(self.primary):
@@ -225,10 +231,11 @@ class LLMRouter:
         """One provider call, plus a single retry when the output was invalid."""
         attempts = 2
         for attempt in range(1, attempts + 1):
-            self.budget.consume()
+            reserved = self.budget.reserve(self._estimate_tokens(system, user))
             try:
-                return await provider.complete(system, user, deadline.cap(step_limit))
+                result = await provider.complete(system, user, deadline.cap(step_limit))
             except ProviderOutputError as exc:
+                # The tokens were spent but the error does not say how many: keep the reservation.
                 # A cut-off answer would be cut off again; any other invalid answer may not be.
                 last_try = attempt == attempts or exc.finish_reason in CUT_OFF_REASONS
                 self._log_failure(provider, exc)
@@ -236,14 +243,34 @@ class LLMRouter:
                     raise
             except ProviderRateLimitedError as exc:
                 # A call refused for rate limit did no work and used no quota.
-                self.budget.refund()
+                self.budget.refund(reserved)
                 self._log_failure(provider, exc)
                 self._maybe_pause(provider, exc)
                 raise
             except ProviderError as exc:
+                # Other failures may have reached the model, so the reservation stays (prudence).
                 self._log_failure(provider, exc)
                 raise
+            else:
+                self._settle(reserved, result)
+                return result
         raise AssertionError("unreachable: the loop returns or raises")  # pragma: no cover
+
+    def _estimate_tokens(self, system: str, user: str) -> int:
+        return (len(system) + len(user)) // CHARS_PER_TOKEN + self.max_output_tokens
+
+    def _settle(self, reserved: int, result: ProviderResult) -> None:
+        """Replace the reservation with what the call really cost.
+
+        Groq does not count cached prompt tokens against the daily quota. Without usage data the
+        reservation stays as the cost.
+        """
+        if result.prompt_tokens is None:
+            return
+        actual = (
+            result.prompt_tokens - (result.cached_tokens or 0) + (result.completion_tokens or 0)
+        )
+        self.budget.settle(reserved, max(0, actual))
 
     def _maybe_pause(self, provider: LLMProvider, exc: ProviderRateLimitedError) -> None:
         """Cut a provider for everyone only when waiting a little would not help."""

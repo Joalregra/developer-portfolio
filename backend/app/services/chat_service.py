@@ -1,9 +1,9 @@
 """The whole life of one chat question, from the limits to the logged answer.
 
 Every layer of defence is called from here, in a fixed order (backend brief, section 9):
-switch, rate limit, quick answer, cleaning, heuristics, answer cache, classifier, budget, model,
-output validation. Routes call this and nothing else. It raises domain errors and never
-imports FastAPI.
+switch, rate limit, quick answer, cleaning, heuristics, answer cache, classifier, visitor quota,
+token budget, model, output validation. Routes call this and nothing else. It raises domain
+errors and never imports FastAPI.
 """
 
 import asyncio
@@ -19,6 +19,7 @@ from app.core.errors import (
     AssistantUnavailableError,
     InvalidModelOutputError,
     InvalidRequestError,
+    QuestionLimitError,
     RateLimitedError,
 )
 from app.core.logging import request_id_var
@@ -34,7 +35,12 @@ from app.services.llm.base import ProviderOutputError, ProviderRequestError, Pro
 from app.services.llm.router import LLMRouter, NoProviderAvailableError
 from app.services.output_validator import OutputValidator
 from app.services.prompt import REFUSALS, build_user_message
-from app.services.rate_limit import RateLimiter, RateLimitExceededError
+from app.services.rate_limit import (
+    ModelQuota,
+    ModelQuotaExceededError,
+    RateLimiter,
+    RateLimitExceededError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +69,7 @@ class ChatService:
         guard: PromptGuard | None,
         validator: OutputValidator,
         rate_limiter: RateLimiter,
+        model_quota: ModelQuota,
         writer: ChatLogWriter,
         answer_cache: AnswerCache,
         request_timeout_seconds: float,
@@ -74,6 +81,7 @@ class ChatService:
         self.guard = guard
         self.validator = validator
         self.rate_limiter = rate_limiter
+        self.model_quota = model_quota
         self.writer = writer
         self.answer_cache = answer_cache
         self.request_timeout = request_timeout_seconds
@@ -84,8 +92,9 @@ class ChatService:
         """Answer one question.
 
         Raises:
-            AssistantPausedError: The switch is off or today's model budget is spent.
+            AssistantPausedError: The switch is off or today's token budget is spent.
             RateLimitedError: This visitor sent too many requests.
+            QuestionLimitError: This visitor used up their questions to the model for now.
             InvalidRequestError: The question has no text left after cleaning.
             AssistantUnavailableError: No model could answer in time.
             InvalidModelOutputError: The model's answer was not usable, twice.
@@ -107,7 +116,8 @@ class ChatService:
         deadline = Deadline(self.request_timeout)
         if (refusal := await self._screen_with_classifier(exchange)) is not None:
             return refusal
-        result = await self._ask_model(exchange, history, country, deadline)
+        self._reserve_model_question(exchange, client_key)
+        result = await self._ask_model(exchange, history, country, deadline, client_key)
         return self._respond(exchange, result)
 
     def _admit(self, request: ChatRequest, client_key: str) -> None:
@@ -163,6 +173,20 @@ class ChatService:
             section=hit.section,
         )
 
+    def _reserve_model_question(self, exchange: _Exchange, client_key: str) -> None:
+        """Count this question against the visitor's allowance for the model.
+
+        It runs after the cache and the classifier: a quick button, a repeated question or a
+        refusal never costs the visitor a question.
+        """
+        try:
+            self.model_quota.reserve(client_key)
+        except ModelQuotaExceededError as exc:
+            logger.warning("visitor_model_quota_reached", extra={"window": exc.window})
+            raise QuestionLimitError(
+                exc.retry_after_seconds, locale=exchange.request.locale
+            ) from exc
+
     async def _screen_with_classifier(self, exchange: _Exchange) -> ChatResponse | None:
         if self.guard is None:
             return None
@@ -178,7 +202,10 @@ class ChatService:
         history: Sequence[ChatTurn],
         country: str | None,
         deadline: Deadline,
+        client_key: str,
     ) -> ProviderResult:
+        """Call the router. A failure that is not the visitor's fault gives their question back;
+        an invalid answer does not, because it did spend tokens."""
         locale = exchange.request.locale
         user_message = build_user_message(exchange.question, history, locale)
         try:
@@ -187,8 +214,10 @@ class ChatService:
                     self.system_prompt, user_message, country=country, deadline=deadline
                 )
         except BudgetExhaustedError as exc:
+            self.model_quota.release(client_key)
             raise AssistantPausedError(locale=locale) from exc
         except NoProviderAvailableError as exc:
+            self.model_quota.release(client_key)
             self._record(exchange, ChatStatus.PROVIDER_ERROR, LlmProvider.NONE)
             retry = exc.retry_after_seconds
             headers = {"Retry-After": str(int(retry))} if retry else None
@@ -196,6 +225,7 @@ class ChatService:
         except ProviderRequestError as exc:
             # Our request or key is wrong (the router already logged it). The fallback would
             # not help, and it is a bug to fix.
+            self.model_quota.release(client_key)
             self._record(exchange, ChatStatus.PROVIDER_ERROR, LlmProvider.NONE)
             raise AssistantUnavailableError(locale=locale) from exc
         except ProviderOutputError as exc:
@@ -203,6 +233,7 @@ class ChatService:
             raise InvalidModelOutputError(locale=locale) from exc
         except TimeoutError as exc:
             logger.error("deadline_exceeded", extra={"stage": "model"})
+            self.model_quota.release(client_key)
             self._record(exchange, ChatStatus.PROVIDER_ERROR, LlmProvider.NONE)
             raise AssistantUnavailableError(locale=locale) from exc
 
