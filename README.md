@@ -4,7 +4,9 @@ Personal portfolio of **Johan Alexis Rendon Granada**, Junior Backend Developer 
 
 [![CI](https://github.com/Joalregra/developer-portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/Joalregra/developer-portfolio/actions/workflows/ci.yml)
 
-> **Status:** in production. The portfolio is live at [johanrendon.com](https://johanrendon.com).
+[![Release](https://img.shields.io/github/v/release/Joalregra/developer-portfolio)](https://github.com/Joalregra/developer-portfolio/releases)
+
+> **Status:** in production, version **v1.0.0** (see the [changelog](CHANGELOG.md) and the [releases](https://github.com/Joalregra/developer-portfolio/releases)). The portfolio is live at [johanrendon.com](https://johanrendon.com).
 
 ## Live
 | What | Address |
