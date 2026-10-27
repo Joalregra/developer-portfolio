@@ -291,7 +291,11 @@ async def main(argv: list[str] | None = None) -> int:
             # The limits protect the public endpoint; here the only visitor is the runner.
             "rate_limit_per_minute": 10_000,
             "rate_limit_per_day": 100_000,
-            "daily_llm_budget": 100_000,
+            "model_calls_per_visitor_hour": 100_000,
+            "model_calls_per_visitor_day": 100_000,
+            "daily_token_budget": 100_000_000,
+            # Nothing from the evaluation may reach the production state file.
+            "state_file": None,
             # The evaluation measures the model, so no answer may come from memory.
             "answer_cache_ttl_seconds": 0,
         }

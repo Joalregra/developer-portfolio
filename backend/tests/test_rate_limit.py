@@ -3,7 +3,13 @@ import logging
 import pytest
 
 from app.services import rate_limit
-from app.services.rate_limit import RateLimiter, RateLimitExceededError, client_key
+from app.services.rate_limit import (
+    ModelQuota,
+    ModelQuotaExceededError,
+    RateLimiter,
+    RateLimitExceededError,
+    client_key,
+)
 from tests.fakes import FakeClock
 
 
@@ -142,3 +148,110 @@ def test_an_ipv4_visitor_seen_through_an_ipv6_socket_keeps_its_own_key() -> None
 def test_ipv4_and_unknown_hosts_are_kept_as_they_are() -> None:
     assert client_key("203.0.113.7") == "203.0.113.7"
     assert client_key("testclient") == "testclient"
+
+
+def make_quota(clock: FakeClock, per_hour: int = 3, per_day: int = 6) -> ModelQuota:
+    return ModelQuota(per_hour, per_day, clock=clock)
+
+
+def test_model_questions_within_the_hour_allowance_pass(clock: FakeClock) -> None:
+    quota = make_quota(clock)
+
+    for _ in range(3):
+        quota.reserve("a")
+
+
+def test_the_question_over_the_hour_allowance_is_refused_with_a_wait_time(
+    clock: FakeClock,
+) -> None:
+    quota = make_quota(clock)
+    for _ in range(3):
+        quota.reserve("a")
+        clock.advance(60)
+
+    with pytest.raises(ModelQuotaExceededError) as caught:
+        quota.reserve("a")
+
+    # the oldest question is 180 s old, so it leaves the hour in 3,420 s
+    assert (caught.value.window, caught.value.retry_after_seconds) == ("hour", 3420)
+
+
+def test_the_allowance_comes_back_as_the_hour_slides(clock: FakeClock) -> None:
+    quota = make_quota(clock)
+    for _ in range(3):
+        quota.reserve("a")
+
+    clock.advance(rate_limit.HOUR)
+
+    quota.reserve("a")
+
+
+def test_the_day_allowance_holds_even_when_the_hour_is_free(clock: FakeClock) -> None:
+    quota = make_quota(clock)
+    for _ in range(2):  # 3 + 3 questions, an hour apart
+        for _ in range(3):
+            quota.reserve("a")
+        clock.advance(rate_limit.HOUR)
+
+    with pytest.raises(ModelQuotaExceededError) as caught:
+        quota.reserve("a")
+
+    assert caught.value.window == "day"
+    assert caught.value.retry_after_seconds == rate_limit.DAY - 2 * rate_limit.HOUR
+
+
+def test_the_day_allowance_slides_too(clock: FakeClock) -> None:
+    quota = make_quota(clock, per_hour=10, per_day=2)
+    quota.reserve("a")
+    quota.reserve("a")
+
+    clock.advance(rate_limit.DAY)
+
+    quota.reserve("a")
+
+
+def test_each_visitor_has_their_own_model_allowance(clock: FakeClock) -> None:
+    quota = make_quota(clock, per_hour=1, per_day=1)
+    quota.reserve("a")
+
+    quota.reserve("b")
+
+    with pytest.raises(ModelQuotaExceededError):
+        quota.reserve("a")
+
+
+def test_a_released_question_can_be_asked_again(clock: FakeClock) -> None:
+    quota = make_quota(clock, per_hour=1, per_day=1)
+    quota.reserve("a")
+
+    quota.release("a")
+    quota.reserve("a")
+
+    with pytest.raises(ModelQuotaExceededError):
+        quota.reserve("a")
+
+
+def test_releasing_an_unknown_key_does_nothing(clock: FakeClock) -> None:
+    make_quota(clock).release("nobody")
+
+
+def test_the_model_quota_stops_tracking_old_keys(clock: FakeClock) -> None:
+    quota = make_quota(clock)
+    quota.reserve("old")
+
+    clock.advance(rate_limit.DAY + 1)
+    quota.reserve("new")  # the sweep runs here
+
+    assert list(quota._calls) == ["new"]
+
+
+def test_the_model_quota_tracks_a_bounded_number_of_keys(
+    clock: FakeClock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(rate_limit, "MAX_TRACKED_KEYS", 3)
+    quota = make_quota(clock)
+
+    for key in "abcd":
+        quota.reserve(key)
+
+    assert list(quota._calls) == ["b", "c", "d"]

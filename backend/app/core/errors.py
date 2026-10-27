@@ -95,6 +95,27 @@ class RateLimitedError(AppError):
         super().__init__(locale=locale, headers={"Retry-After": str(retry_after_seconds)})
 
 
+class QuestionLimitError(AppError):
+    """One visitor used up the questions they may send to the model for now. Quick buttons and
+    repeated questions still work, so the message says so."""
+
+    status_code = 429
+    code = "question_limit"
+    messages = _messages(
+        en=(
+            "You have reached the assistant's question limit for now. The quick questions "
+            "still work, and you can email Johan."
+        ),
+        es=(
+            "Llegaste al límite de preguntas al asistente por ahora. Las preguntas rápidas "
+            "siguen funcionando, y puedes escribirle a Johan por correo."
+        ),
+    )
+
+    def __init__(self, retry_after_seconds: int, *, locale: Locale = Locale.EN) -> None:
+        super().__init__(locale=locale, headers={"Retry-After": str(retry_after_seconds)})
+
+
 class AssistantPausedError(AppError):
     """The daily budget is spent or the kill switch is off."""
 
