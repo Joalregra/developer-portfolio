@@ -4,7 +4,16 @@ Personal portfolio of **Johan Alexis Rendon Granada**, Junior Backend Developer 
 
 [![CI](https://github.com/Joalregra/developer-portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/Joalregra/developer-portfolio/actions/workflows/ci.yml)
 
-> **Status:** ready for its first production deploy. The live site and screenshots will be added at launch.
+[![Release](https://img.shields.io/github/v/release/Joalregra/developer-portfolio)](https://github.com/Joalregra/developer-portfolio/releases)
+
+> **Status:** in production, version **v1.0.0** (see the [changelog](CHANGELOG.md) and the [releases](https://github.com/Joalregra/developer-portfolio/releases)). The portfolio is live at [johanrendon.com](https://johanrendon.com).
+
+## Live
+| What | Address |
+|---|---|
+| Portfolio | [johanrendon.com](https://johanrendon.com), in Spanish at `/es/` and in English at `/en/` |
+| API health check | [api.johanrendon.com/health](https://api.johanrendon.com/health) |
+| Gedocs demo | [gedocs.johanrendon.com](https://gedocs.johanrendon.com) |
 
 ## Features
 - Bilingual single-page portfolio (Spanish and English), prerendered at `/es/` and `/en/`
@@ -170,7 +179,7 @@ GitHub Actions runs the same on every push to `main` and on every pull request, 
 - [x] Anonymous log in PostgreSQL with 90-day retention
 - [x] Evaluation set for the assistant
 - [x] Deployment files: shared Caddy, API compose with the retention job, image and deploy workflow, Cloudflare Workers configuration
-- [ ] First production deploy and the live links
+- [x] First production deploy and the live links
 - [x] Demo of the Gedocs project with test data
 
 ## Author
