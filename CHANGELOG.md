@@ -4,6 +4,34 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-28
+
+The free Groq quota now lasts: one visitor can no longer spend it alone, the daily limit is counted in tokens, and a deploy no longer hands the quota back or empties the answer cache.
+
+### Added
+- **Per-visitor limit on questions that reach a model:** 3 an hour and 6 a day (`MODEL_CALLS_PER_VISITOR_HOUR`, `MODEL_CALLS_PER_VISITOR_DAY`). Quick buttons, cached answers and refusals do not count, and the question is given back if the model failed through no fault of the visitor. Past the limit the API answers `429 question_limit` with `Retry-After`. The counters stay in memory, so no address reaches the disk.
+- **Widget message for `question_limit`:** it explains the limit, links to the email and shows no retry button. The quick questions keep working.
+- **State that survives a deploy** (`STATE_FILE`, decision 21): the answer cache and today's token count are saved to a file on the new `api_state` volume (a save every 30 s when something changed, and a final one at shutdown). The file holds no visitor text and no address; if it is missing, corrupt or unwritable the chat starts empty and only logs a warning.
+
+### Changed
+- **The daily budget counts tokens, not calls:** `DAILY_TOKEN_BUDGET` (default 150000) replaces `DAILY_LLM_BUDGET`. Each call reserves an estimate and settles to the real usage.
+- The answer cache key is now a hash of the question, so the visitor's text is not kept in memory or on disk.
+- Deploy: the image creates `/data` for the unprivileged user, the API compose file mounts the volume and waits up to 45 s for the final save, and Dependabot opens its version updates against `develop`.
+- Docs: decision 21, the chat flow and the deployment runbook (state volume, new variables, release steps).
+
+### Upgrading
+- No database migration.
+- Optional: in `deploy/api/.env`, replace `DAILY_LLM_BUDGET` with `DAILY_TOKEN_BUDGET=150000`. The old line is ignored, and the default is the same value.
+- The first start logs `state_not_found`; after the next restart it logs `state_restored`.
+
+### Checks
+- The Docker image was built and run with the production compose file (user, read-only root, volume, clean shutdown, restore, corrupt and unwritable state).
+- Assistant evaluation of 2026-10-28 (`backend/evals/results/`): 34 of 34 attacks refused, none to review. Of the legitimate questions, 24 of 34 were measured, with 1 false positive (L18, as in 1.0.0) and 1 to review (L11, the model misspelled a company name).
+
+### Known limits
+- The per-visitor counters are not saved, so a deploy resets every visitor's allowance.
+- The other limits of 1.0.0 stay: one process, 2 GB shared with Gedocs, and Gemini unused behind a DNS-only API host.
+
 ## [1.0.0] - 2026-10-27
 
 First stable release. The portfolio is live at [johanrendon.com](https://johanrendon.com).
@@ -42,5 +70,6 @@ First stable release. The portfolio is live at [johanrendon.com](https://johanre
 - The answer cache and the daily call budget live in memory, so a deploy empties them.
 - Not done yet: uptime monitors, and publishing the signed recommendation letter.
 
-[Unreleased]: https://github.com/Joalregra/developer-portfolio/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Joalregra/developer-portfolio/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Joalregra/developer-portfolio/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Joalregra/developer-portfolio/releases/tag/v1.0.0
