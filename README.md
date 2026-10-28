@@ -4,7 +4,16 @@ Personal portfolio of **Johan Alexis Rendon Granada**, Junior Backend Developer 
 
 [![CI](https://github.com/Joalregra/developer-portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/Joalregra/developer-portfolio/actions/workflows/ci.yml)
 
-> **Status:** ready for its first production deploy. The live site and screenshots will be added at launch.
+[![Release](https://img.shields.io/github/v/release/Joalregra/developer-portfolio)](https://github.com/Joalregra/developer-portfolio/releases)
+
+> **Status:** in production, version **v1.0.0** (see the [changelog](CHANGELOG.md) and the [releases](https://github.com/Joalregra/developer-portfolio/releases)). The portfolio is live at [johanrendon.com](https://johanrendon.com).
+
+## Live
+| What | Address |
+|---|---|
+| Portfolio | [johanrendon.com](https://johanrendon.com), in Spanish at `/es/` and in English at `/en/` |
+| API health check | [api.johanrendon.com/health](https://api.johanrendon.com/health) |
+| Gedocs demo | [gedocs.johanrendon.com](https://gedocs.johanrendon.com) |
 
 ## Features
 - Bilingual single-page portfolio (Spanish and English), prerendered at `/es/` and `/en/`
@@ -75,7 +84,7 @@ With Docker, `docker compose up` starts PostgreSQL and the backend (it needs `ba
 ## Backend
 
 ### How the chat works
-`POST /api/chat` answers questions about Johan and nothing else. A question goes through, in order: the on/off switch, the per-visitor rate limit, text cleaning that masks emails and phone numbers, the quick-question shortcut (a button is answered from the knowledge file with no model), a list of known attack phrases, the answer cache (a repeated question is served from memory with no model), the Prompt Guard 2 classifier, the daily budget, the model, and an output validator that replaces a leaked prompt, a link to another site or an off-topic answer with a fixed refusal. The model is Groq `gpt-oss-120b`; if Groq is rate limited or down, the router tries Gemini (only for visitors outside the EU, EEA, UK and Switzerland). The answer is sent first and the anonymous log row is written afterwards, so the assistant never depends on the database.
+`POST /api/chat` answers questions about Johan and nothing else. A question goes through, in order: the on/off switch, the per-visitor rate limit, text cleaning that masks emails and phone numbers, the quick-question shortcut (a button is answered from the knowledge file with no model), a list of known attack phrases, the answer cache (a repeated question is served from memory with no model), the Prompt Guard 2 classifier, the visitor's allowance for the model (3 questions an hour and 6 a day), the daily token budget, the model, and an output validator that replaces a leaked prompt, a link to another site or an off-topic answer with a fixed refusal. The model is Groq `gpt-oss-120b`; if Groq is rate limited or down, the router tries Gemini (only for visitors outside the EU, EEA, UK and Switzerland). The answer cache and the token count are saved to a small file on a volume, so a deploy does not empty them. The answer is sent first and the anonymous log row is written afterwards, so the assistant never depends on the database.
 
 Every step, every failure and what each one logs is in [docs/chat-flow.md](docs/chat-flow.md). The request and response bodies and the error codes are in [docs/architecture.md](docs/architecture.md); `/docs` (Swagger UI, development only: production turns it off) shows them live.
 
@@ -108,7 +117,9 @@ Copy `backend/.env.example` to `backend/.env`; nothing from it is committed. Eve
 | `SITE_URL` | | Public address of the portfolio. Answers may link to it; every other link is removed |
 | `CHAT_ENABLED` | | `false` is the kill switch: the chat answers `503 assistant_paused` |
 | `RATE_LIMIT_PER_MINUTE`, `RATE_LIMIT_PER_DAY` | | Per visitor (an IPv4 address or an IPv6 /56 block). Defaults 10 and 30 |
-| `DAILY_LLM_BUDGET` | | Model calls a day before the assistant pauses (default 300) |
+| `MODEL_CALLS_PER_VISITOR_HOUR`, `MODEL_CALLS_PER_VISITOR_DAY` | | Questions per visitor that may reach a model (default 3 an hour and 6 a day). Quick buttons, cached answers and refusals do not count; past the limit the API answers `429 question_limit` |
+| `DAILY_TOKEN_BUDGET` | | Model tokens a day, all visitors together, before the assistant pauses (default 150000, about 27 uncached questions; Groq's free tier allows about 200000) |
+| `STATE_FILE` | | JSON file where the answer cache and the token budget survive a restart. Unset keeps both in memory; in production it is `/data/state.json` on the `api_state` volume |
 | `ANSWER_CACHE_TTL_SECONDS`, `ANSWER_CACHE_MAX_ENTRIES` | | A repeated question (same language, no history) is answered from memory without a model call, for this many seconds and up to this many entries. Defaults 86400 and 500; `0` seconds switches it off |
 | `GUARD_TIMEOUT_SECONDS`, `GROQ_TIMEOUT_SECONDS`, `GEMINI_TIMEOUT_SECONDS`, `REQUEST_TIMEOUT_SECONDS` | | Time limits for every external call and for the whole request (defaults 3, 12, 15 and 25 seconds) |
 | `DATABASE_URL` | recommended | The app user (`portfolio_app`), which can only `INSERT` and `SELECT`. Without it the chat works but logs nothing |
@@ -170,7 +181,7 @@ GitHub Actions runs the same on every push to `main` and on every pull request, 
 - [x] Anonymous log in PostgreSQL with 90-day retention
 - [x] Evaluation set for the assistant
 - [x] Deployment files: shared Caddy, API compose with the retention job, image and deploy workflow, Cloudflare Workers configuration
-- [ ] First production deploy and the live links
+- [x] First production deploy and the live links
 - [x] Demo of the Gedocs project with test data
 
 ## Author

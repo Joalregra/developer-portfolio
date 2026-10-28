@@ -63,10 +63,19 @@ class Settings(BaseSettings):
     trust_cloudflare_headers: bool = False
     rate_limit_per_minute: int = Field(default=10, gt=0)
     rate_limit_per_day: int = Field(default=30, gt=0)
-    daily_llm_budget: int = Field(default=300, gt=0)
+    # Questions that reach a model, per visitor. Quick buttons, cached answers and refusals do
+    # not count. Each uncached question costs about 5,400 tokens of a small free daily quota.
+    model_calls_per_visitor_hour: int = Field(default=3, gt=0)
+    model_calls_per_visitor_day: int = Field(default=6, gt=0)
+    # Tokens a day for every visitor together. Groq's free tier allows about 200,000; the rest is
+    # left for the evals and manual tests, which use the same key.
+    daily_token_budget: int = Field(default=150_000, gt=0)
     # Repeated questions are answered from memory, without a model call. 0 switches it off.
     answer_cache_ttl_seconds: int = Field(default=86_400, ge=0)
     answer_cache_max_entries: int = Field(default=500, gt=0, le=10_000)
+    # File where the answer cache and the token budget survive a restart. None keeps both in
+    # memory only. It never holds visitor questions or addresses (see services/state_store.py).
+    state_file: Path | None = None
 
     # Time limits for every external call (ERR-06).
     guard_timeout_seconds: float = Field(default=3.0, gt=0)

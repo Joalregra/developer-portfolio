@@ -1,4 +1,8 @@
+import tomllib
+from pathlib import Path
+
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
@@ -32,6 +36,13 @@ def test_cors_rejects_an_unknown_origin(client: TestClient) -> None:
     )
 
     assert "access-control-allow-origin" not in response.headers
+
+
+def test_the_api_version_matches_pyproject(app: FastAPI) -> None:
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    declared = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["version"]
+
+    assert app.version == declared
 
 
 def test_knowledge_files_exist(settings: Settings) -> None:

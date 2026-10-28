@@ -49,9 +49,10 @@ The backend shares one Lightsail instance with the Gedocs demo, behind a single 
 | 413 | `payload_too_large` | The request body is bigger than `MAX_BODY_BYTES` (16 KB by default; the proxy cuts at 64 KB before that) |
 | 422 | `invalid_request` | Body not valid (empty, over 1000 characters, unknown field, more than 6 history messages) |
 | 429 | `rate_limited` | Too many requests; `Retry-After` says when to try again |
+| 429 | `question_limit` | The visitor used up their questions to the model (3 an hour, 6 a day); `Retry-After` says when one frees up. Quick questions and repeated questions still work |
 | 500 | `internal_error` | An unexpected error. The body carries the `request_id` to look it up in the logs, and nothing else |
 | 502 | `invalid_model_output` | The model answered twice without a usable answer |
-| 503 | `assistant_paused` | Switched off, or today's model budget is spent |
+| 503 | `assistant_paused` | Switched off, or today's token budget is spent |
 | 503 | `assistant_unavailable` | No model could answer in time |
 
 When `section` is present, the UI links to that part of the page under the answer ("Ver en: Proyectos"). A quick-question id is answered from the knowledge file without calling a model.

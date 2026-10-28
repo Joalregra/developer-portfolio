@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import replace
 
 import pytest
 
@@ -22,9 +23,15 @@ GEMINI = LlmProvider.GEMINI
 DOWN = ProviderUnavailableError("status 503")
 
 
+# A call to the fake providers reserves about this many tokens: the text is tiny, so the estimate
+# is the output limit. A fake result really costs 5100 - 4800 + 120 = 420 (see answer_result).
+RESERVATION = 102
+MAX_OUTPUT_TOKENS = 100
+
+
 class Setup:
     def __init__(
-        self, primary: FakeProvider, fallback: FakeProvider | None, limit: int = 100
+        self, primary: FakeProvider, fallback: FakeProvider | None, limit: int = 1_000_000
     ) -> None:
         self.clock = FakeClock()
         self.primary = primary
@@ -35,6 +42,7 @@ class Setup:
             DailyBudget(limit, clock=FakeDate()),
             primary_timeout=12,
             fallback_timeout=15,
+            max_output_tokens=MAX_OUTPUT_TOKENS,
             clock=self.clock,
             sleep=self.clock.sleep,
         )
@@ -47,7 +55,7 @@ class Setup:
 def setup(
     primary: list[ProviderResult | Exception],
     fallback: list[ProviderResult | Exception] | None = None,
-    limit: int = 100,
+    limit: int = 1_000_000,
 ) -> Setup:
     return Setup(
         FakeProvider(GROQ, *primary),
@@ -220,10 +228,10 @@ async def test_the_retry_hint_reaches_the_caller_when_nothing_can_answer() -> No
 
 
 async def test_every_provider_call_spends_budget_and_an_empty_budget_stops_it() -> None:
-    s = setup([DOWN], [answer_result(provider=GEMINI)], limit=1)
+    s = setup([DOWN], [answer_result(provider=GEMINI)], limit=RESERVATION + 50)
 
     with pytest.raises(BudgetExhaustedError):
-        await s.ask()  # Groq used the only call; Gemini would be the second
+        await s.ask()  # a failed Groq call keeps its reservation; Gemini no longer fits
 
 
 async def test_each_call_gets_the_smaller_of_its_limit_and_the_time_left() -> None:
@@ -334,11 +342,62 @@ async def test_the_fallback_is_rested_when_it_never_says_when_to_retry() -> None
 
 
 async def test_a_call_refused_for_rate_limit_does_not_spend_budget() -> None:
-    s = setup([ProviderRateLimitedError(2, daily_quota=False), answer_result()], [], limit=1)
+    s = setup(
+        [ProviderRateLimitedError(2, daily_quota=False), answer_result()],
+        [],
+        limit=RESERVATION + 50,
+    )
 
     result = await s.ask()
 
     assert result.provider is GROQ  # without the refund the second call would be over budget
+    assert s.router.budget.used == 420  # and only the real cost of the answer is counted
+
+
+async def test_a_successful_call_settles_the_reservation_to_the_real_tokens() -> None:
+    s = setup([answer_result()], [])
+
+    await s.ask()
+
+    # prompt 5100 - cached 4800 + completion 120: Groq does not count cached tokens in its quota
+    assert s.router.budget.used == 420
+
+
+async def test_a_cold_cache_call_is_counted_in_full() -> None:
+    s = setup([answer_result(cached_tokens=None)], [])
+
+    await s.ask()
+
+    assert s.router.budget.used == 5100 + 120
+
+
+async def test_a_result_without_usage_keeps_the_reservation() -> None:
+    result = replace(answer_result(), prompt_tokens=None, completion_tokens=None)
+    s = setup([result], [])
+
+    await s.ask()
+
+    assert s.router.budget.used == RESERVATION
+
+
+async def test_a_provider_failure_keeps_the_reservation() -> None:
+    s = setup([DOWN], fallback=None)
+
+    with pytest.raises(NoProviderAvailableError):
+        await s.ask()
+
+    assert s.router.budget.used == RESERVATION
+
+
+async def test_the_reservation_grows_with_the_size_of_the_prompt() -> None:
+    s = setup([DOWN], fallback=None)
+
+    with pytest.raises(NoProviderAvailableError):
+        await s.router.complete(
+            "s" * 4000, "u" * 400, country=None, deadline=Deadline(25, clock=s.clock)
+        )
+
+    assert s.router.budget.used == 1100 + MAX_OUTPUT_TOKENS
 
 
 async def test_a_visitor_who_waited_in_line_past_the_deadline_is_not_sent_to_the_model() -> None:
