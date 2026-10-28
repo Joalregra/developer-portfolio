@@ -29,7 +29,7 @@ export interface ChatMessage {
   rating?: 'up' | 'down'
 }
 
-export type ChatError = 'unavailable' | 'rateLimit' | 'offline'
+export type ChatError = 'unavailable' | 'rateLimit' | 'questionLimit' | 'offline'
 
 function restore(): ChatMessage[] {
   const raw = readStorage('session', STORAGE_KEY)
@@ -58,6 +58,8 @@ function restore(): ChatMessage[] {
 }
 
 function classify(error: unknown): ChatError {
+  // The visitor used up their questions to the model: quick buttons still work.
+  if (error instanceof ApiError && error.code === 'question_limit') return 'questionLimit'
   if (error instanceof ApiError && error.status === 429) return 'rateLimit'
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'offline'
   return 'unavailable'

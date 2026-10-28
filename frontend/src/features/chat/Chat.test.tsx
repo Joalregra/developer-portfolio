@@ -158,6 +158,34 @@ describe('chat assistant', () => {
     )
   })
 
+  it('shows the question limit message with the email and no retry for question_limit', async () => {
+    mockedPostChat.mockRejectedValue(new ApiError(429, 'limit', 'question_limit'))
+    const user = userEvent.setup()
+    render(<App initialLocale="es" />)
+    await openPanel(user)
+    await user.type(screen.getByLabelText('Tu pregunta para el asistente'), 'Hola{Enter}')
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Llegaste al límite de preguntas al asistente por ahora.')
+    expect(alert).toHaveTextContent('Las preguntas rápidas siguen funcionando')
+    expect(within(alert).getByRole('link', { name: 'johanalexis808@gmail.com' })).toHaveAttribute(
+      'href',
+      'mailto:johanalexis808@gmail.com',
+    )
+    expect(within(alert).queryByRole('button', { name: 'Reintentar' })).toBeNull()
+    // the quick questions stay available
+    expect(screen.getAllByRole('button', { name: /disponibilidad/i }).length).toBeGreaterThan(0)
+  })
+
+  it('keeps the generic rate limit message for a 429 without the question_limit code', async () => {
+    mockedPostChat.mockRejectedValue(new ApiError(429, 'slow down', 'rate_limited'))
+    const user = userEvent.setup()
+    render(<App initialLocale="en" />)
+    await user.click(screen.getByRole('button', { name: 'Ask my assistant' }))
+    await screen.findByRole('dialog', {}, { timeout: 5000 })
+    await user.type(screen.getByLabelText('Your question for the assistant'), 'Hi{Enter}')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Wait a minute and try again.')
+  })
+
   it('shows the offline message when there is no connection', async () => {
     Object.defineProperty(window.navigator, 'onLine', { value: false, configurable: true })
     mockedPostChat.mockRejectedValue(new TypeError('Failed to fetch'))
