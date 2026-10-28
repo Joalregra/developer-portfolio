@@ -24,7 +24,8 @@ from app.services.llm.base import LLMProvider
 from app.services.llm.router import LLMRouter
 from app.services.output_validator import OutputValidator, build_allowed_url_prefixes
 from app.services.prompt import RULES, build_system_prompt
-from app.services.rate_limit import RateLimiter
+from app.services.rate_limit import ModelQuota, RateLimiter
+from app.services.state_store import StatePersister, fingerprint_of
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +45,16 @@ class ChatRuntime:
     service: ChatService
     writer: ChatLogWriter
     closers: list[Closer] = field(default_factory=list)
+    persister: StatePersister | None = None
+
+    def start(self) -> None:
+        """Start the background work. Needs a running event loop."""
+        if self.persister is not None:
+            self.persister.start()
 
     async def aclose(self) -> None:
+        if self.persister is not None:
+            await self.persister.aclose()  # the final save, after the last request finished
         await self.writer.drain(LOG_DRAIN_SECONDS)
         for close in self.closers:
             await close()
@@ -73,18 +82,25 @@ def build_chat_runtime(
     closers: list[Closer] = [groq_client.close]
     fallback = _build_fallback(settings, closers)
     writer = ChatLogWriter(session_factory)
+    system_prompt = build_system_prompt(
+        knowledge.prompt_text, settings.canary_token.get_secret_value()
+    )
+    budget = DailyBudget(settings.daily_token_budget)
+    answer_cache = AnswerCache(
+        ttl_seconds=settings.answer_cache_ttl_seconds,
+        max_entries=settings.answer_cache_max_entries,
+    )
     service = ChatService(
         enabled=settings.chat_enabled,
         knowledge=knowledge,
-        system_prompt=build_system_prompt(
-            knowledge.prompt_text, settings.canary_token.get_secret_value()
-        ),
+        system_prompt=system_prompt,
         router=LLMRouter(
             _build_primary(settings, groq_client),
             fallback,
-            DailyBudget(settings.daily_llm_budget),
+            budget,
             primary_timeout=settings.groq_timeout_seconds,
             fallback_timeout=settings.gemini_timeout_seconds,
+            max_output_tokens=settings.llm_max_output_tokens,
         ),
         guard=PromptGuard(
             groq_provider.GroqPromptGuard(groq_client, model=settings.guard_model),
@@ -97,14 +113,23 @@ def build_chat_runtime(
             allowed_url_prefixes=build_allowed_url_prefixes(settings.site_url),
         ),
         rate_limiter=RateLimiter(settings.rate_limit_per_minute, settings.rate_limit_per_day),
-        writer=writer,
-        answer_cache=AnswerCache(
-            ttl_seconds=settings.answer_cache_ttl_seconds,
-            max_entries=settings.answer_cache_max_entries,
+        model_quota=ModelQuota(
+            settings.model_calls_per_visitor_hour, settings.model_calls_per_visitor_day
         ),
+        writer=writer,
+        answer_cache=answer_cache,
         request_timeout_seconds=settings.request_timeout_seconds,
     )
-    return ChatRuntime(service=service, writer=writer, closers=closers)
+    persister = None
+    if settings.state_file is not None:
+        persister = StatePersister(
+            settings.state_file,
+            fingerprint=fingerprint_of(system_prompt),
+            budget=budget,
+            cache=answer_cache,
+        )
+        persister.restore()
+    return ChatRuntime(service=service, writer=writer, closers=closers, persister=persister)
 
 
 def _build_primary(settings: Settings, client: groq.AsyncGroq) -> LLMProvider:

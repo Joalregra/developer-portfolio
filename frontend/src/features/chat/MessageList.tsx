@@ -116,8 +116,20 @@ export function MessageList() {
             </p>
           )}
           {error === 'rateLimit' && <p>{t.chat.rateLimit}</p>}
+          {error === 'questionLimit' && (
+            <p>
+              {t.chat.questionLimit}{' '}
+              <a
+                className="font-medium underline underline-offset-2"
+                href={`mailto:${profile.email}`}
+              >
+                {profile.email}
+              </a>
+              .
+            </p>
+          )}
           {error === 'offline' && <p>{t.chat.offline}</p>}
-          {error !== 'rateLimit' && (
+          {error !== 'rateLimit' && error !== 'questionLimit' && (
             <button
               type="button"
               onClick={retry}

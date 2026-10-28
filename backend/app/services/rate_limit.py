@@ -19,6 +19,7 @@ from typing import Final
 logger = logging.getLogger(__name__)
 
 MINUTE: Final = 60.0
+HOUR: Final = 3_600.0
 DAY: Final = 86_400.0
 SWEEP_EVERY_SECONDS: Final = 60.0
 MAX_TRACKED_KEYS: Final = 50_000
@@ -29,6 +30,15 @@ class RateLimitExceededError(Exception):
     def __init__(self, retry_after_seconds: int) -> None:
         super().__init__("rate limit exceeded")
         self.retry_after_seconds = retry_after_seconds
+
+
+class ModelQuotaExceededError(Exception):
+    """A visitor used up the questions they may send to a model. `window` is "hour" or "day"."""
+
+    def __init__(self, retry_after_seconds: int, window: str) -> None:
+        super().__init__("model quota exceeded")
+        self.retry_after_seconds = retry_after_seconds
+        self.window = window
 
 
 def client_key(host: str) -> str:
@@ -134,3 +144,65 @@ class RateLimiter:
         }
         self._blocked_until = {k: t for k, t in self._blocked_until.items() if t > now}
         logger.info("limiter_stats", extra=self.stats())
+
+
+class ModelQuota:
+    """How many questions per hour and per day one visitor may send to a model.
+
+    RateLimiter counts every request; this counts only the ones that would cost model tokens, so
+    quick buttons, cached answers and refusals never reach it. Same rules as RateLimiter: sliding
+    windows, injected clock, one sweep a minute, a ceiling on tracked keys. The counters stay in
+    memory on purpose: no address is ever written to disk, and a restart gives everyone a fresh
+    quota.
+    """
+
+    def __init__(
+        self,
+        per_hour: int,
+        per_day: int,
+        *,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self.per_hour = per_hour
+        self.per_day = per_day
+        self._clock = clock
+        self._calls: dict[str, deque[float]] = {}
+        self._last_sweep = clock()
+
+    def reserve(self, key: str) -> None:
+        """Count one model question for `key`.
+
+        Raises:
+            ModelQuotaExceededError: The key used its hour or day allowance.
+        """
+        now = self._clock()
+        self._sweep(now)
+        calls = self._calls.get(key)
+        if calls is None:
+            self._make_room()
+            calls = self._calls[key] = deque()
+        while calls and now - calls[0] >= DAY:
+            calls.popleft()
+        in_last_hour = [moment for moment in calls if now - moment < HOUR]
+        if len(in_last_hour) >= self.per_hour:
+            raise ModelQuotaExceededError(math.ceil(HOUR - (now - in_last_hour[0])), "hour")
+        if len(calls) >= self.per_day:
+            raise ModelQuotaExceededError(math.ceil(DAY - (now - calls[0])), "day")
+        calls.append(now)
+
+    def release(self, key: str) -> None:
+        """Give back the last reservation of `key`, for a question that failed through no fault
+        of the visitor."""
+        calls = self._calls.get(key)
+        if calls:
+            calls.pop()
+
+    def _make_room(self) -> None:
+        if len(self._calls) >= MAX_TRACKED_KEYS:
+            self._calls.pop(next(iter(self._calls)))
+
+    def _sweep(self, now: float) -> None:
+        if now - self._last_sweep < SWEEP_EVERY_SECONDS:
+            return
+        self._last_sweep = now
+        self._calls = {k: v for k, v in self._calls.items() if v and now - v[-1] < DAY}

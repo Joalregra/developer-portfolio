@@ -142,6 +142,8 @@ export const es = {
     retry: 'Reintentar',
     unavailable: 'El asistente no está disponible ahora. Puedes escribirme a',
     rateLimit: 'Has hecho muchas preguntas seguidas. Espera un minuto e inténtalo de nuevo.',
+    questionLimit:
+      'Llegaste al límite de preguntas al asistente por ahora. Las preguntas rápidas siguen funcionando, y puedes escribirme a',
     offline: 'Sin conexión. Revisa tu internet.',
     loading: 'Cargando el asistente',
     feedback: {

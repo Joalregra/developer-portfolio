@@ -45,12 +45,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.warning("forwarded_allow_ips_not_set")
     if settings.chat_enabled:
         runtime = build_chat_runtime(settings, app.state.knowledge, app.state.session_factory)
+        runtime.start()
         app.state.chat_service = runtime.service
     try:
         yield
     finally:
         if runtime is not None:
-            await runtime.aclose()  # writes the last log rows before the engine goes away
+            await (
+                runtime.aclose()
+            )  # saves the state and the last log rows before the engine goes away
         if engine is not None:
             await engine.dispose()
 
@@ -65,7 +68,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     docs_enabled = not settings.is_production
     app = FastAPI(
         title=settings.app_name,
-        version="1.0.0",
+        version="1.1.0",
         lifespan=lifespan,
         docs_url="/docs" if docs_enabled else None,
         redoc_url="/redoc" if docs_enabled else None,
