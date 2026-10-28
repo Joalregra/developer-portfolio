@@ -9,4 +9,4 @@ alembic==1.20.0
 # Imported directly (network errors from the Gemini SDK); groq and google-genai need it too.
 httpx==0.28.1
 groq==1.7.0
-google-genai==2.31.0
+google-genai==2.33.0
