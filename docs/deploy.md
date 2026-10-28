@@ -410,3 +410,4 @@ If the phone also gets `429`, uvicorn is seeing Caddy's address instead of the v
 
 - 2026-10-21: validated against the first production deploy. The setup now follows the order used then (the frontend is published after the cutover). Added the exact formats of the GitHub secrets, the cutover checks, the Cloudflare form and menu names, how to confirm a deploy and several troubleshooting rows.
 - 2026-10-26: added the per-visitor model quota, the token budget and the persisted state volume (decision 21): `api_state` volume, `STATE_FILE`, `DAILY_TOKEN_BUDGET`.
+- 2026-10-28: v1.1.0. The state volume and the new variables above ship in this release; the image and the compose file were checked on Docker before it (read-only root, volume, clean shutdown, restore).
