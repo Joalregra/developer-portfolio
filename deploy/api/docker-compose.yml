@@ -15,9 +15,11 @@ services:
       # SEC-03: uvicorn trusts X-Forwarded-For only from this address, the shared Caddy's fixed
       # address on the "web" network. Any other sender cannot fake a visitor's address.
       FORWARDED_ALLOW_IPS: 172.30.0.10
+      # Tied to the volume mounted below, so the server's .env does not need to know about it.
+      STATE_FILE: /data/state.json
     # The command is the one in backend/Dockerfile: a single uvicorn process on port 8000. It must
-    # stay a single process (ARQ-06): the rate limit, the daily budget and the answer cache live in
-    # memory, so a second worker would split them.
+    # stay a single process (ARQ-06): the rate limits live in memory and the state file has one
+    # writer, so a second worker would split the first and fight over the second.
     expose:
       - "8000"
     networks:
@@ -35,7 +37,11 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-    # The app writes nothing to disk: logs go to stdout and every counter is in memory.
+    # The only thing the app writes is /data/state.json (answer cache and today's token budget), so
+    # a deploy does not empty the cache or hand the Groq quota back. Logs go to stdout and the
+    # per-visitor counters stay in memory: no address is ever written to disk.
+    volumes:
+      - api_state:/data
     read_only: true
     tmpfs:
       - /tmp
@@ -70,6 +76,9 @@ services:
       resources:
         limits:
           memory: 256M
+
+volumes:
+  api_state: {}
 
 networks:
   web:
