@@ -61,6 +61,12 @@ export const es = {
     demoIntro:
       'Demo pública con datos ficticios, que se reinician cada día a las 3:00 a. m. (hora de Colombia). No hace falta registrarse: en la pantalla de inicio elige un rol en «Entrar sin registrarte». La interfaz está en español.',
     demoLink: 'Abrir la demo de Gedocs',
+    source: 'Código y documentación',
+    sourceIntro:
+      'El equipo desarrolló el código en el repositorio original. Yo escribí la documentación en mi fork: el README reescrito y una wiki de 14 páginas, verificada contra el código.',
+    sourceLink: 'Código y documentación (mi fork)',
+    docsLink: 'Wiki del proyecto',
+    upstreamLink: 'Repositorio original del equipo',
     zoom: (alt: string) => `Ampliar imagen: ${alt}`,
     lightbox: {
       label: 'Vista ampliada de la imagen',

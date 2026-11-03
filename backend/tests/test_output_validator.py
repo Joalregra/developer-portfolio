@@ -127,6 +127,34 @@ def test_a_trailing_full_stop_does_not_break_an_allowed_link(validator: OutputVa
     assert result.text == f"Find him at {GITHUB_URL}."
 
 
+def test_the_links_to_the_gedocs_fork_and_its_wiki_are_kept_whole(
+    validator: OutputValidator,
+) -> None:
+    # The fork lives under Johan's own GitHub account, so it is a place he owns (PI-10).
+    text = (
+        f"The code and the documentation are in {GITHUB_URL}/GeDocs and the wiki is at "
+        f"{GITHUB_URL}/GeDocs/wiki."
+    )
+
+    result = validator.validate(model(text), Locale.EN)
+
+    assert not result.refused
+    assert result.text == text
+
+
+def test_the_link_to_the_original_gedocs_repository_is_removed(
+    validator: OutputValidator,
+) -> None:
+    # The original belongs to a teammate, not to Johan: the answer names it without the link.
+    result = validator.validate(
+        model("The code was developed in https://github.com/LydiaSierra/GeDocs by the team."),
+        Locale.EN,
+    )
+
+    assert "github.com/LydiaSierra" not in result.text
+    assert "developed in" in result.text
+
+
 def test_odd_hyphens_and_spaces_become_plain_ones(validator: OutputValidator) -> None:
     result = validator.validate(model("back‑ends and front‐ends"), Locale.EN)
 

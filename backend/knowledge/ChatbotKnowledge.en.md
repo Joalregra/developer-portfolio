@@ -82,13 +82,13 @@ Where the main technologies were used:
 - Laravel (PHP), React and MySQL: Gedocs, deployed and used by about 60 people.
 - Node.js: institutional academic projects.
 - WordPress with Elementor: academic web design projects.
-- PHPUnit and Vitest: the test suite of the institutional project Gedocs (PHPUnit for the backend, Vitest for the frontend).
+- Pest (built on PHPUnit) and Vitest: the test suite of the institutional project Gedocs (Pest for the backend, Vitest for the frontend).
 
 Full technology list:
 1. Languages: Python, JavaScript, PHP, TypeScript, SQL (MySQL, PostgreSQL), HTML/CSS.
 2. Frameworks and platforms: React.js, Node.js, Laravel, FastAPI, WordPress.
 3. DevOps and infrastructure: Docker, DigitalOcean, Dokploy, Linux, AWS, Jenkins, Terraform.
-4. Tools: Git, GitHub, GitLab, Jira, Trello, Figma (UI/UX mockups), Vitest, PHPUnit, Slack, Discord, Microsoft Teams.
+4. Tools: Git, GitHub, GitLab, Jira, Trello, Figma (UI/UX mockups), Vitest, Pest (PHPUnit), Slack, Discord, Microsoft Teams.
 
 Technologies used in the traineeship projects of section 6 (in addition to the list above): SQLAlchemy, Pydantic, Gemini, Groq, pytest, TanStack Query, Zustand, Tailwind, React Testing Library, MSW, Vite, fastembed, pgvector.
 
@@ -125,8 +125,9 @@ Total: 2 years of studies at SENA, plus a 6-month traineeship as a FullStack Dev
 
 ### Project 1: Gedocs - institutional document archive and PQRSD management system
 - Period: July 2024 to April 2026. Team: 9 people. Users: about 60.
-- Johan's role: full-stack QA (tested the frontend and the backend) and frontend (mockups and several React interfaces). Johan also led the test suite: PHPUnit for the backend and Vitest for the frontend.
-- Stack: Laravel (PHP), React (JavaScript), MySQL, PHPUnit, Vitest, DigitalOcean, Dokploy.
+- Johan's role: full-stack QA (tested the frontend and the backend), frontend (mockups and several React interfaces) and documentation. Johan also led the test suite: Pest (built on PHPUnit) for the backend and Vitest for the frontend.
+- Stack: Laravel (PHP), React (JavaScript), MySQL, Pest (PHPUnit), Vitest, DigitalOcean, Dokploy.
+- Code and documentation: Johan's fork https://github.com/Joalregra/GeDocs and its wiki https://github.com/Joalregra/GeDocs/wiki, linked from the Gedocs card in the Projects section of the portfolio. Johan wrote the fork's documentation: a rewritten README and a 14-page wiki (architecture, data model, API reference, roles, testing, requirements traceability and known issues), checked against the source code. The team developed the code in the original repository, LydiaSierra/GeDocs on GitHub.
 - What it is: a web application for document archiving, similar to a drive, plus management of PQRSD (Colombian petitions, complaints, claims, suggestions and reports). Features: meeting minutes (actas), filing numbers (radicado) and document organization following Colombia's General Archives Law, document retention schedules (tablas de retencion documental) with later archiving, and generation of PQRSD-style PDFs.
 - Built for the document management area of SENA, as a training tool for the apprentices of that area.
 - Status: deployed to production by Johan on DigitalOcean using containers and Dokploy, functional and in use by real users.
@@ -193,7 +194,7 @@ Total: 2 years of studies at SENA, plus a 6-month traineeship as a FullStack Dev
 ### Git, deployment and testing
 - Git and workflow: pull requests, push, pull, merge, cherry-pick, rebase, tags and releases. Learning GitHub Actions as of 2026-10. Uses GitHub Projects for tracking work.
 - Deployment: Gedocs with Dokploy (a Docker-based system) on DigitalOcean, without automated CI/CD; another project deployed manually on a Windows Server machine.
-- Testing and quality: backend tests with pytest and PHPUnit; frontend tests with Vitest, React Testing Library and MSW; manual QA of frontend and backend on Gedocs.
+- Testing and quality: backend tests with pytest and Pest (PHPUnit); frontend tests with Vitest, React Testing Library and MSW; manual QA of frontend and backend on Gedocs.
 
 ### Legacy code and frustration
 - Approach: empathy, patience and a systematic method. Old code was written under different context and time limits, so the priority is to understand it, not to judge it.
@@ -220,7 +221,7 @@ Learning is a daily habit:
 ## 9. Quick Questions
 
 ### Q: What are your most important projects?
-A: There are three main projects. First, Gedocs, an institutional web system for document archiving and PQRSD management for SENA, built with Laravel, React and MySQL, with about 60 users. Second, a competitive intelligence platform that analyzes developer-community posts with AI (Python, FastAPI, PostgreSQL, React). Third, an AI-driven product intelligence reporting platform with a multi-phase AI pipeline and a semantic search (RAG) layer. The last two were built during a 6-month traineeship at Globant.
+A: There are three main projects. First, Gedocs, an institutional web system for document archiving and PQRSD management for SENA, built with Laravel, React and MySQL, with about 60 users (the code and the documentation Johan wrote are in his GitHub fork, https://github.com/Joalregra/GeDocs). Second, a competitive intelligence platform that analyzes developer-community posts with AI (Python, FastAPI, PostgreSQL, React). Third, an AI-driven product intelligence reporting platform with a multi-phase AI pipeline and a semantic search (RAG) layer. The last two were built during a 6-month traineeship at Globant.
 
 ### Q: Which technologies or stack do you know best?
 A: The main focus is Python and React. Johan has intermediate knowledge of Node.js, PHP and the Linux terminal, has worked with PostgreSQL and MySQL, and has deployed with Docker, Dokploy and DigitalOcean. As of 2026-10, Johan is learning AWS, Jenkins and Terraform. The full stack also includes TypeScript, FastAPI, Laravel and Vitest.

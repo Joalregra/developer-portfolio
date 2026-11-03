@@ -65,7 +65,7 @@ frontend/
 └── src/
     ├── app/App.tsx            Providers and section order, no logic
     ├── entry-server.tsx       renderToString entry, used only by the prerender step
-    ├── sections/              Hero, Projects (+ ProjectRecord, ProjectDemo, diagrams/), Experience, About, Skills, Education, Contact
+    ├── sections/              Hero, Projects (+ ProjectRecord, ProjectDemo, ProjectSource, diagrams/), Experience, About, Skills, Education, Contact
     ├── components/layout/     Header (navigation, language switch, theme toggle), Footer
     ├── components/ui/         Button, Badge, Section, ExternalLink, PdfLink, CopyEmailButton, Lightbox, icons, RichText, LinkedText
     ├── features/chat/         ChatProvider, ChatContext, ChatLauncher, ChatPanel (lazy chunk, loaded through lazy.ts), useChat, Composer, MessageList, QuickQuestions
@@ -131,7 +131,7 @@ The site is published by Cloudflare Workers Builds, which runs `npm run build` a
 ## Quality and performance
 
 - TypeScript strict mode with `verbatimModuleSyntax` and `erasableSyntaxOnly`. Prettier: no semicolons, single quotes, 100 columns.
-- The tests cover language selection, date formatting, header and mobile menu, hero, projects (order, NDA texts, no empty demo buttons), copying the email, theme, and every assistant state.
+- The tests cover language selection, date formatting, header and mobile menu, hero, projects (order, NDA texts, no empty demo buttons, the Gedocs fork, wiki and original repository links), copying the email, theme, and every assistant state.
 - CI (`.github/workflows/ci.yml`) runs format check, lint, tests and build on every push to `main` and on every pull request. A second job runs the layout checks and Lighthouse on the build.
 - Layout checks (`e2e/layout.spec.ts`, Playwright): widths from 320 to 1440 px, in both languages and both themes. They fail on horizontal scroll, on an assistant field that needs scrolling to be seen, and on a mobile menu, assistant panel or image viewer that leaves the screen. Install a browser once with `npx playwright install chromium`, or set `PW_CHANNEL=msedge` to reuse Edge.
 - Lighthouse CI (`lighthouserc.json`): mobile, three runs per language. It fails below Performance 90, Accessibility, Best Practices or SEO 95, LCP 2.5 s or CLS 0.1. Run it locally with `CHROME_PATH` pointing to Chrome or Edge if it is not found.

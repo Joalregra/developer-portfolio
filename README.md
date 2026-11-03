@@ -14,6 +14,7 @@ Personal portfolio of **Johan Alexis Rendon Granada**, Junior Backend Developer 
 | Portfolio | [johanrendon.com](https://johanrendon.com), in Spanish at `/es/` and in English at `/en/` |
 | API health check | [api.johanrendon.com/health](https://api.johanrendon.com/health) |
 | Gedocs demo | [gedocs.johanrendon.com](https://gedocs.johanrendon.com) |
+| Gedocs code and documentation | [Joalregra/GeDocs](https://github.com/Joalregra/GeDocs) and its [wiki](https://github.com/Joalregra/GeDocs/wiki): my fork, where I wrote the README and the 14-page wiki. The team developed the code in the original repository, [LydiaSierra/GeDocs](https://github.com/LydiaSierra/GeDocs) |
 
 ## Features
 - Bilingual single-page portfolio (Spanish and English), prerendered at `/es/` and `/en/`

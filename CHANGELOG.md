@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+- **Code and documentation block on the Gedocs card:** links to the fork where the project documentation was written (a rewritten README and a 14-page wiki), to its wiki, and to the original team repository where the code was developed. The README lists the same links.
+
+### Changed
+- The Gedocs role now includes the project documentation, in the card, in the experience entry and in the assistant's knowledge (`ChatbotKnowledge.*.md`), which also gives the fork and wiki links. The original repository is named there without a link, because the output validator keeps only links to Johan's own accounts.
+- The Gedocs backend tests are named after Pest, which runs on PHPUnit: "Pest (PHPUnit)" in the card, the skills and the assistant's knowledge, to match the wiki.
+- Dependency updates, all merged into `develop` with the CI green:
+  - Backend: FastAPI 0.162.0, Starlette 1.10.0, SQLAlchemy 2.1.6, google-genai 2.33.0 and httpx2 2.16.0.
+  - Frontend: wrangler 4.156.0, eslint 10.13, vitest 5.0.5 and @testing-library/jest-dom 7.0.1. jsdom 30 is deferred: it needs Node 22.22.2 or later.
+  - GitHub Actions: checkout 7, setup-python 7, docker/login-action 4, docker/metadata-action 6 and docker/setup-buildx-action 4.
+
 ## [1.1.0] - 2026-10-28
 
 The free Groq quota now lasts: one visitor can no longer spend it alone, the daily limit is counted in tokens, and a deploy no longer hands the quota back or empties the answer cache.
