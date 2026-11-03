@@ -46,6 +46,40 @@ describe('Projects', () => {
     expect(within(gedocs).getByText(/datos ficticios/)).toBeInTheDocument()
   })
 
+  it('links the documented fork of Gedocs first, then its wiki and the original repository', () => {
+    renderWithProviders(<Projects />, 'en')
+    const gedocs = screen.getByRole('article', { name: 'Gedocs' })
+    const source = within(gedocs).getByRole('region', { name: 'Code and documentation' })
+    const links = within(source).getAllByRole('link')
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      'https://github.com/Joalregra/GeDocs',
+      'https://github.com/Joalregra/GeDocs/wiki',
+      'https://github.com/LydiaSierra/GeDocs',
+    ])
+    for (const link of links) {
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
+    }
+    expect(within(source).getByText(/I wrote the documentation in my fork/)).toBeInTheDocument()
+  })
+
+  it('states the documentation role of Gedocs in both languages', () => {
+    for (const [locale, label, role] of [
+      ['es', 'Mi rol', /escribí la documentación del proyecto/],
+      ['en', 'My role', /wrote the project documentation/],
+    ] as const) {
+      const { unmount } = renderWithProviders(<Projects />, locale)
+      const gedocs = screen.getByRole('article', { name: 'Gedocs' })
+      expect(within(gedocs).getByText(label).nextElementSibling).toHaveTextContent(role)
+      unmount()
+    }
+  })
+
+  it('shows the code and documentation block only on the project that has one', () => {
+    renderWithProviders(<Projects />, 'en')
+    expect(screen.getAllByRole('region', { name: 'Code and documentation' })).toHaveLength(1)
+  })
+
   it('gives every demo screenshot a text alternative in both languages', () => {
     for (const locale of ['es', 'en'] as const) {
       const { unmount } = renderWithProviders(<Projects />, locale)

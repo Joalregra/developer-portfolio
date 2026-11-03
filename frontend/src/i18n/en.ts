@@ -63,6 +63,12 @@ export const en: Messages = {
     demoIntro:
       'Public demo with fictitious data, which resets every day at 3:00 a.m. (Colombia time). No sign-up needed: on the login screen, pick a role under "Entrar sin registrarte" ("Enter without registering"). The interface is in Spanish.',
     demoLink: 'Open the Gedocs demo',
+    source: 'Code and documentation',
+    sourceIntro:
+      'The team developed the code in the original repository. I wrote the documentation in my fork: the rewritten README and a 14-page wiki, checked against the code.',
+    sourceLink: 'Code and documentation (my fork)',
+    docsLink: 'Project wiki',
+    upstreamLink: 'Original team repository',
     zoom: (alt: string) => `Enlarge image: ${alt}`,
     lightbox: {
       label: 'Enlarged image',
