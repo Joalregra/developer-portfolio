@@ -7,6 +7,7 @@ import { useLocale } from '../hooks/useLocale'
 import { formatMonthRange } from '../lib/format'
 import { ProjectDiagram } from './diagrams/ProjectDiagram'
 import { ProjectDemo } from './ProjectDemo'
+import { ProjectSource } from './ProjectSource'
 
 const subheading = 'heading text-lg'
 
@@ -102,6 +103,9 @@ export function ProjectRecord({ project }: { project: Project }) {
         )}
         {project.demo && (
           <ProjectDemo demo={project.demo} headingClassName={subheading} titleId={titleId} />
+        )}
+        {project.source && (
+          <ProjectSource source={project.source} headingClassName={subheading} titleId={titleId} />
         )}
 
         {hasDetail && (

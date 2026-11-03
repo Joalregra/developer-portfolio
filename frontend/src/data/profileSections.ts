@@ -67,11 +67,11 @@ export const experience: ExperienceEntry[] = [
     bullets: {
       es: [
         'Participé en Gedocs, un sistema de archivo documental y PQRSD, con un equipo de **9 personas** y unos **60 usuarios** reales.',
-        'Hice QA full stack, creé maquetas e interfaces en React y lideré la suite de pruebas (PHPUnit y Vitest).',
+        'Hice QA full stack, creé maquetas e interfaces en React, lideré la suite de pruebas (Pest y Vitest) y escribí la documentación del proyecto.',
       ],
       en: [
         'I took part in Gedocs, a document archiving and PQRSD system, with a team of **9 people** and about **60 real users**.',
-        'I did full stack QA, created mockups and React interfaces, and led the test suite (PHPUnit and Vitest).',
+        'I did full stack QA, created mockups and React interfaces, led the test suite (Pest and Vitest) and wrote the project documentation.',
       ],
     },
     projectIds: ['gedocs'],
@@ -115,7 +115,7 @@ export const skillGroups: SkillGroup[] = [
       'Vitest',
       'React Testing Library',
       'MSW',
-      'PHPUnit',
+      'Pest (PHPUnit)',
       'SQLAlchemy',
       'Pydantic',
       'pgvector',

@@ -23,6 +23,17 @@ export interface ProjectDemo {
   screenshots: ProjectScreenshot[]
 }
 
+/**
+ * Public source and documentation of a project. For Gedocs, `url` and `docsUrl` are Johan's fork,
+ * which he documented (README and wiki), and `upstreamUrl` is the team repository where the code
+ * was developed.
+ */
+export interface ProjectSource {
+  url: string
+  docsUrl: string
+  upstreamUrl: string
+}
+
 export interface Project {
   id: ProjectId
   name: Localized
@@ -37,6 +48,7 @@ export interface Project {
   /** Only the reports platform is stated to run in production in the company's private environment. */
   runsInPrivateProduction: boolean
   demo?: ProjectDemo
+  source?: ProjectSource
   problem: Localized
   /** Strings may wrap figures in **double asterisks** to render them in bold. */
   did: Localized<string[]>
@@ -209,8 +221,8 @@ export const projects: Project[] = [
     },
     period: { start: '2024-07', end: '2026-04' },
     role: {
-      es: 'QA full stack y frontend: maquetas e interfaces en React. Lideré la suite de pruebas.',
-      en: 'Full stack QA and frontend: mockups and React interfaces. I led the test suite.',
+      es: 'QA full stack, frontend y documentación: maquetas e interfaces en React. Lideré la suite de pruebas y escribí la documentación del proyecto.',
+      en: 'Full stack QA, frontend and documentation: mockups and React interfaces. I led the test suite and wrote the project documentation.',
     },
     team: 9,
     status: 'production',
@@ -272,6 +284,11 @@ export const projects: Project[] = [
         },
       ],
     },
+    source: {
+      url: 'https://github.com/Joalregra/GeDocs',
+      docsUrl: 'https://github.com/Joalregra/GeDocs/wiki',
+      upstreamUrl: 'https://github.com/LydiaSierra/GeDocs',
+    },
     problem: {
       es: 'El área de gestión documental del SENA necesitaba archivar documentos como en un drive y gestionar PQRSD (peticiones, quejas, reclamos, sugerencias y denuncias), conforme a la Ley General de Archivos de Colombia.',
       en: 'The document management area of SENA needed to archive documents like in a drive and manage PQRSD (petitions, complaints, claims, suggestions and reports), following the Colombian General Archives Law.',
@@ -280,13 +297,15 @@ export const projects: Project[] = [
       es: [
         'Hice QA full stack: probé el frontend y el backend.',
         'Creé las maquetas y diseñé varias interfaces en React.',
-        'Lideré la suite de pruebas: PHPUnit en el backend y Vitest en el frontend.',
+        'Lideré la suite de pruebas: Pest (PHPUnit) en el backend y Vitest en el frontend.',
+        'Escribí la documentación del proyecto en mi fork: un README reescrito y una wiki de 14 páginas (arquitectura, modelo de datos, referencia de la API, roles, pruebas, trazabilidad de requisitos y problemas conocidos), verificada contra el código.',
         'Desplegué el sistema a producción en DigitalOcean, en contenedores con Dokploy.',
       ],
       en: [
         'I did full stack QA: I tested both the frontend and the backend.',
         'I created the mockups and designed several React interfaces.',
-        'I led the test suite: PHPUnit on the backend and Vitest on the frontend.',
+        'I led the test suite: Pest (PHPUnit) on the backend and Vitest on the frontend.',
+        'I wrote the project documentation in my fork: a rewritten README and a 14-page wiki (architecture, data model, API reference, roles, testing, requirements traceability and known issues), checked against the source code.',
         'I deployed the system to production on DigitalOcean, in containers with Dokploy.',
       ],
     },
@@ -304,7 +323,7 @@ export const projects: Project[] = [
       es: 'En producción, con unos **60 usuarios** reales. Equipo de **9 personas**.',
       en: 'In production, with about **60 real users**. Team of **9 people**.',
     },
-    stack: ['Laravel', 'React', 'MySQL', 'PHPUnit', 'Vitest', 'DigitalOcean', 'Dokploy'],
+    stack: ['Laravel', 'React', 'MySQL', 'Pest (PHPUnit)', 'Vitest', 'DigitalOcean', 'Dokploy'],
     stackMore: [],
     question: {
       es: '¿Qué hizo Johan en Gedocs?',
