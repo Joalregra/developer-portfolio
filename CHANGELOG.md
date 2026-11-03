@@ -4,16 +4,34 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-03
+
+Maintenance release: the Gedocs card now points to the fork where the project documentation was written, and the backend, frontend and CI dependencies are up to date. There is no change to the API, the chat contract, the database or the server configuration.
+
 ### Added
-- **Code and documentation block on the Gedocs card:** links to the fork where the project documentation was written (a rewritten README and a 14-page wiki), to its wiki, and to the original team repository where the code was developed. The README lists the same links.
+- **Code and documentation block on the Gedocs card** (#38): links to the fork where the project documentation was written (a rewritten README and a 14-page wiki), to its wiki, and to the original team repository where the code was developed. The README lists the same links.
 
 ### Changed
-- The Gedocs role now includes the project documentation, in the card, in the experience entry and in the assistant's knowledge (`ChatbotKnowledge.*.md`), which also gives the fork and wiki links. The original repository is named there without a link, because the output validator keeps only links to Johan's own accounts.
-- The Gedocs backend tests are named after Pest, which runs on PHPUnit: "Pest (PHPUnit)" in the card, the skills and the assistant's knowledge, to match the wiki.
-- Dependency updates, all merged into `develop` with the CI green:
-  - Backend: FastAPI 0.162.0, Starlette 1.10.0, SQLAlchemy 2.1.6, google-genai 2.33.0 and httpx2 2.16.0.
-  - Frontend: wrangler 4.156.0, eslint 10.13, vitest 5.0.5 and @testing-library/jest-dom 7.0.1. jsdom 30 is deferred: it needs Node 22.22.2 or later.
-  - GitHub Actions: checkout 7, setup-python 7, docker/login-action 4, docker/metadata-action 6 and docker/setup-buildx-action 4.
+- **Gedocs role** (#38): it now includes the project documentation, in the card, in the experience entry and in the assistant's knowledge (`ChatbotKnowledge.*.md`), which also gives the fork and wiki links. The original repository is named there without a link, because the output validator keeps only links to Johan's own accounts.
+- **Pest (PHPUnit)** (#38): the Gedocs backend tests are named after Pest, which runs on PHPUnit, in the card, the skills and the assistant's knowledge, to match the wiki.
+- **Backend dependencies** (#30, #31, #33, #34, #35): FastAPI 0.143.2 to 0.162.0, Starlette 1.8.0 to 1.10.0, SQLAlchemy 2.1.4 to 2.1.6, google-genai 2.31.0 to 2.33.0 and httpx2 2.13.1 to 2.16.0.
+- **Frontend dependencies** (#17, #20, #21, #32): wrangler 4.149.0 to 4.156.0, eslint 10.12 to 10.13, vitest 5.0.4 to 5.0.5 and @testing-library/jest-dom 6.9.1 to 7.0.1. jsdom 30 is deferred: it needs Node 22.22.2 or later.
+- **GitHub Actions** (#37): checkout 4 to 7, setup-python 5 to 7, docker/login-action 3 to 4, docker/metadata-action 5 to 6 and docker/setup-buildx-action 3 to 4, applied together in one pull request.
+
+### Upgrading
+- No database migration and no change in `deploy/api/.env`.
+- The assistant's knowledge changed, so the first start after the deploy drops the saved answer cache once (`state_cache_discarded`). The token count of the day is kept.
+
+### Checks
+- The Docker image was rebuilt without cache from `develop` with the new dependencies and run with the production compose file in Debian: unprivileged user, read-only root, volume, clean shutdown, restore, and corrupt or unwritable state all passed, with 86 MiB of memory at rest. It ran before #38, which changes only the knowledge files inside the image.
+- The full API with the new dependencies answered a real Groq question in 2.5 s, a repeated question from the cache in 32 ms, refused an attack and returned 422 for an empty message, with no errors in the log. After #38, a question about the Gedocs code and documentation, in Spanish and in English, returned the fork and wiki links whole and not the original repository.
+- Backend: `ruff`, `ruff format`, `mypy` and `pytest` (450 tests). Frontend: `prettier`, `eslint`, `vitest` (88 tests), `npm run build`, the Playwright layout checks (88 passed, 8 skipped by design) and Lighthouse CI.
+- `wrangler dev` with wrangler 4.156.0 serves the Content-Security-Policy, the security headers and the 404 page as before.
+- `npm audit`: no vulnerabilities in the production dependencies, and 12 moderate ones in development (`minimatch` inside eslint), down from 15.
+- Not repeated for this version: the full assistant evaluation (last run 2026-10-28, with the legitimate questions L25 to L34 still pending) and a manual *Deploy API* run from `develop`.
+
+### Known limits
+- The limits of 1.1.0 stay: the per-visitor counters are not saved, one process, 2 GB shared with Gedocs, and Gemini unused behind a DNS-only API host.
 
 ## [1.1.0] - 2026-10-28
 
@@ -81,6 +99,7 @@ First stable release. The portfolio is live at [johanrendon.com](https://johanre
 - The answer cache and the daily call budget live in memory, so a deploy empties them.
 - Not done yet: uptime monitors, and publishing the signed recommendation letter.
 
-[Unreleased]: https://github.com/Joalregra/developer-portfolio/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Joalregra/developer-portfolio/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/Joalregra/developer-portfolio/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Joalregra/developer-portfolio/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Joalregra/developer-portfolio/releases/tag/v1.0.0
